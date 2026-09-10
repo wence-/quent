@@ -436,17 +436,12 @@ describe('getPlanDAG', () => {
     expect(result.nodes.find(n => n.id === 'op1')!.type).toBe('operator');
   });
 
-  it('falls back to plans[0] when planId does not match any plan', () => {
-    const op1 = makeOperator('op1', { typeName: 'Scan' });
-    const op2 = makeOperator('op2', { typeName: 'Join' });
-    const port1 = makePort('port1', 'op1');
-    const port2 = makePort('port2', 'op2');
-    const plan = makePlan('p1', { edges: [{ source: 'port1', target: 'port2' }] });
-    const bundle = makeBundle({ p1: plan }, { operators: { op1, op2 }, ports: { port1, port2 } });
-    // 'no-such-plan' doesn't exist; should fall back to p1
-    const result = getPlanDAG(bundle, 'no-such-plan');
-    expect(result.nodes).toHaveLength(2);
-    expect(result.edges).toHaveLength(1);
+  it('does not silently replace an unknown explicit plan selection', () => {
+    const bundle = makeBundle({ p1: makePlan('p1') });
+
+    expect(() => getPlanDAG(bundle, 'no-such-plan')).toThrow(
+      'No plan found for planId: no-such-plan'
+    );
   });
 
   it('attaches the raw operator to node metadata', () => {

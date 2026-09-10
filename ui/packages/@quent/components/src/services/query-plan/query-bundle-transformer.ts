@@ -102,7 +102,7 @@ export const getPlanDAG = (
   const plans = Object.values(bundle.entities.plans).filter(
     (plan): plan is Plan => plan !== undefined
   );
-  const planTree = plans.find(plan => plan.id === planId) || plans[0];
+  const planTree = plans.find(plan => plan.id === planId);
 
   if (!planTree) {
     throw new Error(`No plan found for planId: ${planId}`);

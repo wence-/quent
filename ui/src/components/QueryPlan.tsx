@@ -7,7 +7,7 @@ import { useQueryBundle, useDataFlow } from '@quent/client';
 import { useQueryPlanVisualization } from '@/hooks/useQueryPlanVisualization';
 import { TreeView } from '@quent/components';
 import { ResizableHandle, ResizablePanel, ResizablePanelGroup } from '@quent/components';
-import { thinScrollbarClass, type QueryPlanDataItem } from '@quent/components';
+import { getDefaultPlanId, thinScrollbarClass, type QueryPlanDataItem } from '@quent/components';
 import { useSelectedPlanId, useSetSelectedPlanId, useSetHoveredWorkerId } from '@quent/hooks';
 import { DAGControls, DAGNodeInfoPanel, DagPlayhead } from '@quent/components';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@quent/components';
@@ -107,10 +107,9 @@ export function QueryPlan({ queryId, engineId }: { queryId: string; engineId: st
     topPanel.resize(cappedPx);
   }, [treeData, planId]);
 
-  // TODO: Currently fetching root plan when bundle loads - is this correct?
   useEffect(() => {
     if (queryBundle && !planId) {
-      setPlanId(queryBundle.plan_tree.id);
+      setPlanId(getDefaultPlanId(queryBundle));
     }
   }, [queryBundle, planId, setPlanId]);
 

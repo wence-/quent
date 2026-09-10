@@ -1,14 +1,19 @@
 // SPDX-FileCopyrightText: Copyright (c) 2026, NVIDIA CORPORATION & AFFILIATES. All rights reserved.
 // SPDX-License-Identifier: Apache-2.0
 
-import { useEffect, useLayoutEffect, useRef, lazy, Suspense } from 'react';
+import { useEffect, useLayoutEffect, useRef, useState, lazy, Suspense } from 'react';
 import type { PanelImperativeHandle } from 'react-resizable-panels';
 import { useQueryBundle, useDataFlow } from '@quent/client';
 import { useQueryPlanVisualization } from '@/hooks/useQueryPlanVisualization';
 import { TreeView } from '@quent/components';
 import { ResizableHandle, ResizablePanel, ResizablePanelGroup } from '@quent/components';
 import { getDefaultPlanId, thinScrollbarClass, type QueryPlanDataItem } from '@quent/components';
-import { useSelectedPlanId, useSetSelectedPlanId, useSetHoveredWorkerId } from '@quent/hooks';
+import {
+  useGraphInspection,
+  useSelectedPlanId,
+  useSetSelectedPlanId,
+  useSetHoveredWorkerId,
+} from '@quent/hooks';
 import { DAGControls, DAGNodeInfoPanel, DagPlayhead } from '@quent/components';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@quent/components';
 import {
@@ -40,6 +45,10 @@ const TABS = {
 } as const;
 
 const MAX_TOP_PANEL_HEIGHT_PX = 300;
+const DETAILS_DEFAULT_HEIGHT = '12rem';
+const DETAILS_MIN_HEIGHT = '6rem';
+const DETAILS_COLLAPSED_HEIGHT = '2rem';
+const DAG_MIN_HEIGHT = 160;
 
 export function QueryPlan({ queryId, engineId }: { queryId: string; engineId: string }) {
   const { theme } = useTheme();
@@ -47,6 +56,8 @@ export function QueryPlan({ queryId, engineId }: { queryId: string; engineId: st
   const planId = useSelectedPlanId();
   const setPlanId = useSetSelectedPlanId();
   const setHoveredWorkerId = useSetHoveredWorkerId();
+  const graphInspection = useGraphInspection();
+  const [detailsExpanded, setDetailsExpanded] = useState(false);
   const {
     data: queryBundle,
     isLoading: queryBundleLoading,
@@ -91,6 +102,25 @@ export function QueryPlan({ queryId, engineId }: { queryId: string; engineId: st
   const topPanelRef = useRef<PanelImperativeHandle | null>(null);
   const treeContentRef = useRef<HTMLDivElement>(null);
   const tabsListRef = useRef<HTMLDivElement>(null);
+  const detailsPanelRef = useRef<PanelImperativeHandle | null>(null);
+
+  useEffect(() => {
+    const shouldExpand = graphInspection != null;
+    if (shouldExpand) {
+      detailsPanelRef.current?.expand();
+    } else {
+      detailsPanelRef.current?.collapse();
+    }
+  }, [graphInspection]);
+
+  const handleDetailsExpandedChange = (nextExpanded: boolean) => {
+    setDetailsExpanded(nextExpanded);
+    if (nextExpanded) {
+      detailsPanelRef.current?.expand();
+    } else {
+      detailsPanelRef.current?.collapse();
+    }
+  };
 
   // Resize the top panel to fit tree content (capped at MAX_TOP_PANEL_HEIGHT_PX).
   // Note: PanelImperativeHandle.resize() treats numbers as pixels.
@@ -229,21 +259,44 @@ export function QueryPlan({ queryId, engineId }: { queryId: string; engineId: st
           collapsedSize="0%"
           className="overflow-hidden"
         >
-          <div className="flex flex-col h-full">
-            <div className="flex-1 min-h-0">
-              <Suspense
-                fallback={
-                  <div className="flex items-center justify-center h-full text-muted-foreground">
-                    Loading visualization...
-                  </div>
-                }
-              >
-                <DAGChart data={dagData} height="100%" isDark={isDark} />
-              </Suspense>
-            </div>
-            <DagPlayhead />
-            <DAGNodeInfoPanel isDark={isDark} quantitySpecs={queryBundle.quantity_specs} />
-          </div>
+          <ResizablePanelGroup orientation="vertical" className="h-full">
+            <ResizablePanel defaultSize="75%" minSize={DAG_MIN_HEIGHT}>
+              <div className="flex h-full min-h-0 flex-col">
+                <div className="flex-1 min-h-0">
+                  <Suspense
+                    fallback={
+                      <div className="flex items-center justify-center h-full text-muted-foreground">
+                        Loading visualization...
+                      </div>
+                    }
+                  >
+                    <DAGChart data={dagData} height="100%" isDark={isDark} />
+                  </Suspense>
+                </div>
+                <DagPlayhead />
+              </div>
+            </ResizablePanel>
+
+            <ResizableHandle withHandle data-panel-group-direction="vertical" />
+
+            <ResizablePanel
+              panelRef={detailsPanelRef}
+              defaultSize={DETAILS_DEFAULT_HEIGHT}
+              minSize={DETAILS_MIN_HEIGHT}
+              collapsible
+              collapsedSize={DETAILS_COLLAPSED_HEIGHT}
+              groupResizeBehavior="preserve-pixel-size"
+              onResize={size => setDetailsExpanded(size.inPixels > 32)}
+              className="overflow-hidden"
+            >
+              <DAGNodeInfoPanel
+                isDark={isDark}
+                quantitySpecs={queryBundle.quantity_specs}
+                expanded={detailsExpanded}
+                onExpandedChange={handleDetailsExpandedChange}
+              />
+            </ResizablePanel>
+          </ResizablePanelGroup>
         </ResizablePanel>
       </ResizablePanelGroup>
     </div>

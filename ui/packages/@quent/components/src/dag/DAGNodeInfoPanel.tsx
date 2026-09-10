@@ -25,9 +25,13 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from '../ui/tabs';
 export const DAGNodeInfoPanel = ({
   isDark = false,
   quantitySpecs,
+  expanded,
+  onExpandedChange,
 }: {
   isDark?: boolean;
   quantitySpecs?: { [key: string]: QuantitySpec | undefined };
+  expanded?: boolean;
+  onExpandedChange?: (expanded: boolean) => void;
 }) => {
   const selectedNodeData = useSelectedNodeData();
   const inspection = useGraphInspection();
@@ -35,7 +39,14 @@ export const DAGNodeInfoPanel = ({
   const isPlaying = useDataFlowIsPlaying();
   const dataFlowMeta = useDataFlowMeta();
   const dataFlowFrame = useDataFlowFrame();
-  const [isExpanded, setIsExpanded] = useState(false);
+  const [internalExpanded, setInternalExpanded] = useState(false);
+  const isExpanded = expanded ?? internalExpanded;
+  const setIsExpanded = (value: boolean) => {
+    if (expanded === undefined) {
+      setInternalExpanded(value);
+    }
+    onExpandedChange?.(value);
+  };
   const [activeTab, setActiveTab] = useState('stats');
   const [closedOperatorIds, setClosedOperatorIds] = useState<Set<string>>(() => new Set());
   const inspectionKey =
@@ -65,10 +76,12 @@ export const DAGNodeInfoPanel = ({
   };
 
   useEffect(() => {
-    setIsExpanded(hasSelection);
+    if (expanded === undefined) {
+      setInternalExpanded(hasSelection);
+    }
     setActiveTab('stats');
     setClosedOperatorIds(new Set());
-  }, [hasSelection, inspectionKey]);
+  }, [expanded, hasSelection, inspectionKey]);
 
   useEffect(() => {
     if (isPlaying && isExpanded && showDataFlowTab) {
@@ -76,7 +89,7 @@ export const DAGNodeInfoPanel = ({
     }
   }, [isPlaying, isExpanded, showDataFlowTab]);
 
-  const scrollClass = cn('px-4 pb-2 h-48 overflow-auto', thinScrollbarClass);
+  const scrollClass = cn('min-h-0 flex-1 overflow-auto px-4 pb-2', thinScrollbarClass);
 
   const statsContent =
     inspection?.kind === 'operator' ? (
@@ -109,7 +122,7 @@ export const DAGNodeInfoPanel = ({
     );
 
   return (
-    <div className="border-t bg-card flex-shrink-0">
+    <div className="flex h-full min-h-0 flex-col bg-card">
       <div className="flex items-center justify-between px-4 py-1.5 min-w-0">
         <div className="flex items-center gap-2 min-w-0 overflow-hidden">
           <span className="text-xs text-muted-foreground font-medium flex-shrink-0">
@@ -165,7 +178,7 @@ export const DAGNodeInfoPanel = ({
           <Tabs
             value={activeTab}
             onValueChange={setActiveTab}
-            className="border-t overflow-visible"
+            className="flex min-h-0 flex-1 flex-col border-t overflow-visible"
           >
             <TabsList className="h-7 py-0 px-1 rounded-none">
               <TabsTrigger value="stats" className="text-xs px-2 py-0.5">

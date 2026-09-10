@@ -3,6 +3,7 @@
 
 import { describe, expect, it } from 'vitest';
 import type { DAGNode } from '@quent/utils';
+import { getEdgeInteractionWidth, isEdgeInspectionKey } from './edgeInteraction';
 import { resolveInspectedNodeData, resolveInspectedNodeSelections } from './dagSelection';
 
 const NODES: DAGNode[] = [
@@ -91,5 +92,18 @@ describe('resolveInspectedNodeData', () => {
     const afterData = resolveInspectedNodeSelections(NODES, selectedIds);
     expect(afterData.selections.map(selection => selection.selectionId)).toEqual(['logical']);
     expect(afterData.unresolvedOperatorIds).toEqual(new Set(['unknown']));
+  });
+});
+
+describe('edge interaction affordance', () => {
+  it('keeps thin edges easy to acquire without constraining visible widths', () => {
+    expect(getEdgeInteractionWidth(1.5)).toBe(16);
+    expect(getEdgeInteractionWidth(25)).toBe(25);
+  });
+
+  it('supports standard keyboard activation keys', () => {
+    expect(isEdgeInspectionKey('Enter')).toBe(true);
+    expect(isEdgeInspectionKey(' ')).toBe(true);
+    expect(isEdgeInspectionKey('Escape')).toBe(false);
   });
 });

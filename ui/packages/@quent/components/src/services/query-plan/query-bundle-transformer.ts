@@ -40,6 +40,10 @@ const getNodeEntity = (
         type: operator.operator_type_name?.toLowerCase() ?? 'operator',
         metadata: {
           rawNode: operator,
+          ports: Object.values(bundle.entities.ports).filter(
+            (candidate): candidate is Port =>
+              candidate !== undefined && candidate.operator_id === operator.id
+          ),
           relatedOperatorIds,
           relatedOperators: relatedOperatorIds.flatMap(id => {
             const relatedOperator = bundle.entities.operators[id];

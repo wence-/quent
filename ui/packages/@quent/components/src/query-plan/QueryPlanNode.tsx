@@ -15,6 +15,7 @@ import {
   NODE_LABEL_FIELD,
   DAG_LAYOUT_DIRECTION,
   type Operator,
+  type Port,
   type DagLayoutDirection,
 } from '@quent/utils';
 import {
@@ -38,6 +39,7 @@ export interface QueryPlanNodeData extends Record<string, unknown> {
   operationType: string;
   metadata?: {
     rawNode?: Operator;
+    ports?: Port[];
     relatedOperatorIds?: string[];
     relatedOperators?: Operator[];
   };

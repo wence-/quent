@@ -6,7 +6,7 @@ import {
   type DAGNode,
   type InspectedNodeData,
 } from '@quent/utils';
-import { parseCustomStatistics } from '../lib/queryBundle.utils';
+import { parseCustomStatistics, parsePortStatistics } from '../lib/queryBundle.utils';
 import type { QueryPlanNodeData } from '../query-plan/QueryPlanNode';
 
 export interface ResolvedOperatorSelection {
@@ -33,6 +33,11 @@ function inspectNode(node: DAGNode): InspectedNodeData {
     label: node.label,
     operationType: node.type,
     statistics: parseCustomStatistics(metadata?.rawNode),
+    ports: metadata?.ports?.map(port => ({
+      id: port.id,
+      ...(port.instance_name ? { name: port.instance_name } : {}),
+      statistics: parsePortStatistics(port),
+    })),
     relatedOperators: metadata?.relatedOperators?.map(operator => ({
       nodeId: operator.id,
       label: operator.instance_name ?? operator.operator_type_name ?? 'Operator',

@@ -22,6 +22,13 @@ export interface InspectedOperatorData {
   label: string;
   operationType: string;
   statistics: Array<{ key: string; value: StatValue; quantity?: string }>;
+  ports?: InspectedPortData[];
+}
+
+export interface InspectedPortData {
+  id: string;
+  name?: string;
+  statistics: Array<{ key: string; value: StatValue }>;
 }
 
 export interface InspectedNodeData extends InspectedOperatorData {

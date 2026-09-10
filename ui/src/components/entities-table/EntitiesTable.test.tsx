@@ -156,6 +156,7 @@ function DagSelectionControl() {
             label: 'Operator One',
             operationType: 'scan',
             statistics: [],
+            observations: [],
           },
         })
       }

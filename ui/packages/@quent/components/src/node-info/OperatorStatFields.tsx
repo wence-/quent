@@ -5,6 +5,7 @@ import type { InspectedOperatorData } from '@quent/hooks';
 import {
   formatStatWithQuantity,
   isNumericValue,
+  type InspectedOperatorObservation,
   type InspectedPortData,
   type QuantitySpec,
   type StatValue,
@@ -80,6 +81,20 @@ function PortRows({ port }: { port: InspectedPortData }) {
   );
 }
 
+function ObservationRows({ observation }: { observation: InspectedOperatorObservation }) {
+  return (
+    <div className="border-t first:border-t-0 py-1">
+      <div className="flex items-center justify-between gap-2 text-xs font-medium">
+        <DataText>{observation.kind}</DataText>
+        <DataText className="text-muted-foreground">
+          {observation.timeSeconds.toFixed(6)} s
+        </DataText>
+      </div>
+      <StatisticRows statistics={observation.attributes} />
+    </div>
+  );
+}
+
 export const OperatorStatFields = ({
   operator,
   quantitySpecs,
@@ -116,7 +131,20 @@ export const OperatorStatFields = ({
           ))}
         </section>
       )}
-      {(['Decision', 'Algorithm', 'Execution'] as const).map(name => {
+      {operator.observations.length > 0 && (
+        <section className="mt-2 border-t pt-1">
+          <h4 className="text-[11px] font-semibold uppercase tracking-wide text-muted-foreground">
+            Observations
+          </h4>
+          {operator.observations.map((observation, index) => (
+            <ObservationRows
+              key={`${observation.timeSeconds}-${observation.kind}-${index}`}
+              observation={observation}
+            />
+          ))}
+        </section>
+      )}
+      {(['Statistics'] as const).map(name => {
         const statistics = sections.get(name) ?? [];
         return statistics.length ? (
           <section key={name} className="mt-2 border-t pt-1">

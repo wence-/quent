@@ -152,6 +152,7 @@ export {
   entityRefToEntitiesKey,
   ENTITY_REF_TO_ENTITIES_KEY,
   parseCustomStatistics,
+  parseOperatorObservations,
   parsePortStatistics,
 } from './lib/queryBundle.utils';
 export { getIconForType, collectResourceTypesFromTree } from './lib/resource.utils';

@@ -51,7 +51,11 @@ import { QueryPlanNode, type QueryPlanNodeData } from '../query-plan/QueryPlanNo
 import { DAGLegend } from './DAGLegend';
 import { resolveInspectedNodeSelections } from './dagSelection';
 import { shouldDimEdgeFromInteraction } from './edgeOpacity';
-import { parseCustomStatistics, parsePortStatistics } from '../lib/queryBundle.utils';
+import {
+  parseCustomStatistics,
+  parseOperatorObservations,
+  parsePortStatistics,
+} from '../lib/queryBundle.utils';
 import {
   continuousColor,
   getOperationTypeColor,
@@ -456,6 +460,7 @@ const FlowLayout = ({
             label: node.data.label,
             operationType: node.data.operationType,
             statistics: parseCustomStatistics(node.data.metadata?.rawNode),
+            observations: parseOperatorObservations(node.data.metadata?.rawNode),
             ports: node.data.metadata?.ports?.map(port => ({
               id: port.id,
               ...(port.instance_name ? { name: port.instance_name } : {}),
@@ -466,6 +471,7 @@ const FlowLayout = ({
               label: operator.instance_name ?? operator.operator_type_name ?? 'Operator',
               operationType: operator.operator_type_name?.toLowerCase() ?? 'operator',
               statistics: parseCustomStatistics(operator),
+              observations: parseOperatorObservations(operator),
             })),
           },
         });

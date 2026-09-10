@@ -1,6 +1,7 @@
 // SPDX-FileCopyrightText: Copyright (c) 2026, NVIDIA CORPORATION & AFFILIATES. All rights reserved.
 // SPDX-License-Identifier: Apache-2.0
 
+import type { InspectedOperatorObservation } from '@quent/utils';
 import type { StatValue } from '../services/query-plan/types';
 
 /**
@@ -21,4 +22,6 @@ export type OperatorActiveSpanEntry = {
   planId: string;
   /** Pre-computed custom statistics for the operator popup. */
   statistics: Array<{ key: string; value: StatValue; quantity?: string }>;
+  /** Timestamped producer-defined observations for the operator popup. */
+  observations: InspectedOperatorObservation[];
 };

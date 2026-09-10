@@ -187,6 +187,7 @@ export function OperatorGanttChart({
               label: op.label,
               operationType: op.typeName,
               statistics: op.statistics,
+              observations: op.observations,
             },
           });
           if (op.planId) {

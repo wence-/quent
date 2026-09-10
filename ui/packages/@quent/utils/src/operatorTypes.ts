@@ -22,7 +22,14 @@ export interface InspectedOperatorData {
   label: string;
   operationType: string;
   statistics: Array<{ key: string; value: StatValue; quantity?: string }>;
+  observations: InspectedOperatorObservation[];
   ports?: InspectedPortData[];
+}
+
+export interface InspectedOperatorObservation {
+  timeSeconds: number;
+  kind: string;
+  attributes: Array<{ key: string; value: StatValue }>;
 }
 
 export interface InspectedPortData {

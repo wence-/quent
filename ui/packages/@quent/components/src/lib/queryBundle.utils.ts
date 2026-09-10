@@ -1,7 +1,7 @@
 // SPDX-FileCopyrightText: Copyright (c) 2026, NVIDIA CORPORATION & AFFILIATES. All rights reserved.
 // SPDX-License-Identifier: Apache-2.0
 
-import { EntityRefKey, unwrapTaggedValue } from '@quent/utils';
+import { EntityRefKey, unwrapTaggedValue, type InspectedOperatorObservation } from '@quent/utils';
 import { QueryEntities, Operator } from '@quent/utils';
 import { StatValue } from '../services/query-plan/types';
 
@@ -43,6 +43,22 @@ export function parseCustomStatistics(
       ...(quantity !== null ? { quantity } : {}),
     };
   });
+}
+
+export function parseOperatorObservations(rawNode: unknown): InspectedOperatorObservation[] {
+  const observations = (rawNode as Operator)?.observations;
+  if (!observations) {
+    return [];
+  }
+
+  return observations.map(observation => ({
+    timeSeconds: observation.time_s,
+    kind: observation.kind,
+    attributes: Object.entries(observation.custom_attributes).map(([key, value]) => ({
+      key,
+      value: value == null ? null : unwrapTaggedValue(value),
+    })),
+  }));
 }
 
 export function parsePortStatistics(rawPort: unknown): Array<{ key: string; value: StatValue }> {

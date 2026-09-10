@@ -85,6 +85,7 @@ export type {
   OperatorSelectionInput,
   OperatorSelectionState,
   InspectedOperatorData,
+  InspectedOperatorObservation,
   InspectedPortData,
   InspectedNodeData,
 } from './operatorTypes';

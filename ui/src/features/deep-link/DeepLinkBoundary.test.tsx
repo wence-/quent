@@ -517,6 +517,7 @@ describe('DeepLinkBoundary', () => {
         data: {
           route: { engineId: 'e', queryId: 'q', tab: 'timeline' },
           timeline: { zoomRange: { start: 20, end: 60 } },
+          dag: { edgeWidthField: 'bytes' },
           resources: {
             expandedRowIds: [RESOURCE_A_ID, RESOURCE_B_ID, NVTX_SECTION_ID],
             resourceFilter: { search: 'resource', resourceTypes: ['channel'] },

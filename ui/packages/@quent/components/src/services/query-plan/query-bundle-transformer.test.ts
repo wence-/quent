@@ -41,8 +41,21 @@ function makeOperator(
   };
 }
 
-function makePort(id: string, operatorId: string | null): Port {
-  return { id, operator_id: operatorId, instance_name: null, statistics: null };
+function makePort(
+  id: string,
+  operatorId: string | null,
+  customStatistics?: Record<string, unknown>
+): Port {
+  return {
+    id,
+    operator_id: operatorId,
+    instance_name: null,
+    statistics: customStatistics ? { custom_statistics: customStatistics } : null,
+  } as Port;
+}
+
+function tagged(variant: string, value: unknown) {
+  return { [variant]: value };
 }
 
 function makePlanTree(
@@ -268,6 +281,82 @@ describe('getPlanDAG', () => {
     const result = getPlanDAG(bundle, 'p1');
     expect(result.edges[0]!.source).toBe('op1');
     expect(result.edges[0]!.target).toBe('op2');
+  });
+
+  it('retains source and target port IDs on each edge', () => {
+    const op1 = makeOperator('op1', { typeName: 'Scan' });
+    const op2 = makeOperator('op2', { typeName: 'Join' });
+    const port1 = makePort('port1', 'op1');
+    const port2 = makePort('port2', 'op2');
+    const plan = makePlan('p1', { edges: [{ source: 'port1', target: 'port2' }] });
+    const bundle = makeBundle({ p1: plan }, { operators: { op1, op2 }, ports: { port1, port2 } });
+
+    const edge = getPlanDAG(bundle, 'p1').edges[0]!;
+
+    expect(edge.sourcePortId).toBe('port1');
+    expect(edge.targetPortId).toBe('port2');
+  });
+
+  it('hydrates edge statistics from both structural ports', () => {
+    const op1 = makeOperator('op1', { typeName: 'Scan' });
+    const op2 = makeOperator('op2', { typeName: 'Join' });
+    const port1 = makePort('port1', 'op1', {
+      messages: tagged('UInt64', 4),
+      bytes: tagged('UInt64', 4096n),
+      bytes_unknown_messages: tagged('UInt64', 1),
+    });
+    const port2 = makePort('port2', 'op2', {
+      messages: tagged('UInt64', 4),
+      bytes: tagged('UInt64', 4096n),
+    });
+    const plan = makePlan('p1', { edges: [{ source: 'port1', target: 'port2' }] });
+    const bundle = makeBundle({ p1: plan }, { operators: { op1, op2 }, ports: { port1, port2 } });
+
+    const edge = getPlanDAG(bundle, 'p1').edges[0]!;
+
+    expect(edge.portStats).toEqual([
+      { key: 'messages', value: 4 },
+      { key: 'bytes', value: 4096n },
+      { key: 'bytes_unknown_messages', value: 1 },
+    ]);
+    expect(edge.targetPortStats).toEqual([
+      { key: 'messages', value: 4 },
+      { key: 'bytes', value: 4096n },
+    ]);
+  });
+
+  it('distinguishes repeated edges between the same operator pair by port IDs', () => {
+    const source = makeOperator('source', { typeName: 'Multiplexer' });
+    const target = makeOperator('target', { typeName: 'Join' });
+    const output0 = makePort('output-0', 'source', { bytes: tagged('UInt64', 0) });
+    const output1 = makePort('output-1', 'source');
+    const input0 = makePort('input-0', 'target');
+    const input1 = makePort('input-1', 'target');
+    const plan = makePlan('p1', {
+      edges: [
+        { source: 'output-0', target: 'input-0' },
+        { source: 'output-1', target: 'input-1' },
+      ],
+    });
+    const bundle = makeBundle(
+      { p1: plan },
+      {
+        operators: { source, target },
+        ports: {
+          'output-0': output0,
+          'output-1': output1,
+          'input-0': input0,
+          'input-1': input1,
+        },
+      }
+    );
+
+    const edges = getPlanDAG(bundle, 'p1').edges;
+
+    expect(edges).toHaveLength(2);
+    expect(edges.map(edge => edge.id)).toEqual(['output-0-input-0', 'output-1-input-1']);
+    expect(edges[0]!.portStats).toEqual([{ key: 'bytes', value: 0 }]);
+    expect(edges[1]!.portStats).toEqual([]);
   });
 
   it('skips edges where the source port is missing from the bundle', () => {

@@ -6,6 +6,7 @@ import {
   entityRefToEntitiesKey,
   ENTITY_REF_TO_ENTITIES_KEY,
   parseCustomStatistics,
+  parseOperatorObservations,
   parsePortStatistics,
 } from './queryBundle.utils';
 
@@ -158,6 +159,41 @@ describe('parseCustomStatistics', () => {
     const keys = result.map(r => r.key);
     expect(keys).toContain('rows');
     expect(keys).toContain('bytes');
+  });
+});
+
+describe('parseOperatorObservations', () => {
+  it('preserves ordered observation kinds, times, and arbitrary values', () => {
+    const operator = {
+      observations: [
+        {
+          time_s: 0.25,
+          kind: 'producer_event',
+          custom_attributes: {
+            scalar: makeTagged('UInt64', 7),
+            array: makeTagged('List', ['a', 'b']),
+            text: makeTagged('String', 'visible'),
+          },
+        },
+      ],
+    };
+
+    expect(parseOperatorObservations(operator)).toEqual([
+      {
+        timeSeconds: 0.25,
+        kind: 'producer_event',
+        attributes: [
+          { key: 'scalar', value: 7 },
+          { key: 'array', value: ['a', 'b'] },
+          { key: 'text', value: 'visible' },
+        ],
+      },
+    ]);
+  });
+
+  it('returns an empty list when observations are absent', () => {
+    expect(parseOperatorObservations(undefined)).toEqual([]);
+    expect(parseOperatorObservations({})).toEqual([]);
   });
 });
 

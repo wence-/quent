@@ -4,7 +4,7 @@
 import { isNumericValue, type StatValue } from '@quent/utils';
 
 export type PresentedStatistic = { key: string; value: StatValue; quantity?: string };
-export type OperatorStatisticSection = 'Flow' | 'Decision' | 'Algorithm' | 'Execution';
+export type OperatorStatisticSection = 'Flow' | 'Statistics';
 
 const FLOW_FIELDS = new Set([
   'input_messages',
@@ -86,28 +86,13 @@ export function sectionOperatorStatistics(
 ): Map<OperatorStatisticSection, PresentedStatistic[]> {
   const sections = new Map<OperatorStatisticSection, PresentedStatistic[]>([
     ['Flow', []],
-    ['Decision', []],
-    ['Algorithm', []],
-    ['Execution', []],
+    ['Statistics', []],
   ]);
 
   for (const statistic of stats) {
-    let section: OperatorStatisticSection;
-    if (FLOW_FIELDS.has(statistic.key)) {
-      section = 'Flow';
-    } else if (statistic.key.startsWith('join_')) {
-      section = 'Decision';
-    } else if (
-      statistic.key === 'runtime_actor_id' ||
-      statistic.key === 'execution_status' ||
-      statistic.key === 'first_error' ||
-      statistic.key.startsWith('tasks_') ||
-      statistic.key.startsWith('input_batches_')
-    ) {
-      section = 'Execution';
-    } else {
-      section = 'Algorithm';
-    }
+    const section: OperatorStatisticSection = FLOW_FIELDS.has(statistic.key)
+      ? 'Flow'
+      : 'Statistics';
     sections.get(section)!.push(statistic);
   }
 

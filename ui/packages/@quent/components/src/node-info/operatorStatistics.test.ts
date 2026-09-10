@@ -40,7 +40,7 @@ describe('operator statistic presentation', () => {
     ).toEqual([{ key: 'output_average_row_bytes', value: 2 }]);
   });
 
-  it('assigns known fields to stable sections and preserves unknown fields', () => {
+  it('separates flow fields and preserves all producer-defined statistics', () => {
     const sections = sectionOperatorStatistics([
       { key: 'input_rows', value: 10 },
       { key: 'join_selected_input', value: 1 },
@@ -49,8 +49,10 @@ describe('operator statistic presentation', () => {
     ]);
 
     expect(sections.get('Flow')?.map(stat => stat.key)).toContain('input_rows');
-    expect(sections.get('Decision')?.map(stat => stat.key)).toEqual(['join_selected_input']);
-    expect(sections.get('Execution')?.map(stat => stat.key)).toEqual(['tasks_completed']);
-    expect(sections.get('Algorithm')?.map(stat => stat.key)).toEqual(['future_statistic']);
+    expect(sections.get('Statistics')?.map(stat => stat.key)).toEqual([
+      'join_selected_input',
+      'tasks_completed',
+      'future_statistic',
+    ]);
   });
 });

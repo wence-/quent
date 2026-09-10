@@ -393,6 +393,7 @@ describe('DAGNodeInfoPanel matrix under tier selection', () => {
     label: 'Op 1',
     operationType: 'scan',
     statistics: [],
+    observations: [],
   };
 
   function renderPanel(
@@ -457,6 +458,7 @@ describe('DAGNodeInfoPanel matrix under tier selection', () => {
       label: 'Logical operator',
       operationType: 'join',
       statistics: [],
+      observations: [],
       relatedOperators: [selectedOperator],
     });
     fireEvent.mouseDown(screen.getByRole('tab', { name: 'Data Flow' }), { button: 0 });

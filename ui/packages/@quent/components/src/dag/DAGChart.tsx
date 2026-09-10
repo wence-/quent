@@ -7,6 +7,7 @@ import {
   useLayoutEffect,
   useMemo,
   useRef,
+  useState,
   MouseEvent,
   type RefObject,
 } from 'react';
@@ -52,12 +53,14 @@ import { calculateLayout, NODE_LAYOUT_WIDTH, NODE_LAYOUT_HEIGHT, FLOW_BAR_HEIGHT
 import type { DAGData } from '../services/query-plan/types';
 import { QueryPlanNode, type QueryPlanNodeData } from '../query-plan/QueryPlanNode';
 import { DAGLegend } from './DAGLegend';
+import { PointerTooltipPortal, type PointerPosition } from '../ui/pointer-tooltip-portal';
 import {
   inspectPipe,
   resolvePipeInspection,
   resolveSelectedOperatorsFromNodes,
 } from './dagSelection';
 import { shouldDimEdgeFromInteraction } from './edgeOpacity';
+import { getEdgeInteractionWidth, isEdgeInspectionKey } from './edgeInteraction';
 import {
   parseCustomStatistics,
   parseOperatorObservations,
@@ -88,7 +91,7 @@ const ARROW_WIDTH_MULTIPLIER = 1.5;
 const ARROW_WIDTH_BASE = 8;
 const ARROW_DEPTH_RATIO = 0.6;
 const FALLBACK_NORMALIZED_T = 0.5; // used when min === max
-const SELECTED_BUILD_EDGE_COLOR = '#d97706';
+const SELECTED_INPUT_EDGE_COLOR = '#d97706';
 const INSPECTED_PIPE_COLOR = '#2563eb';
 
 // Layout constants
@@ -124,6 +127,7 @@ const VariableWidthEdge = ({
   const [edgeWidthField] = useSelectedEdgeWidthField();
   const [edgeColorField] = useSelectedEdgeColorField();
   const isDark = (data as { isDark?: boolean })?.isDark ?? false;
+  const [tooltipPosition, setTooltipPosition] = useState<PointerPosition | null>(null);
 
   let strokeWidth = EDGE_STROKE_WIDTH_DEFAULT;
   if (edgeWidthConfig) {
@@ -164,7 +168,7 @@ const VariableWidthEdge = ({
     selectedNodeIds: selectedOperatorIds,
     highlightedNodeIds,
   });
-  const isEdgeDimmed = edgeDimmed || dimFromInteraction;
+  let isEdgeDimmed = edgeDimmed || dimFromInteraction;
   const renderedEdge = (data as { edge?: DAGData['edges'][number] })?.edge;
   const isBuildEdge =
     renderedEdge !== undefined &&
@@ -172,7 +176,7 @@ const VariableWidthEdge = ({
       isSelectedInputEdge(renderedEdge, operator.nodeId, operator.statistics)
     );
   if (isBuildEdge) {
-    edgeColor = SELECTED_BUILD_EDGE_COLOR;
+    edgeColor = SELECTED_INPUT_EDGE_COLOR;
     strokeWidth = Math.max(strokeWidth, EDGE_STROKE_WIDTH_MIN + 2);
   }
   const isInspectedPipe =
@@ -183,6 +187,7 @@ const VariableWidthEdge = ({
   if (isInspectedPipe) {
     edgeColor = INSPECTED_PIPE_COLOR;
     strokeWidth = Math.max(strokeWidth, EDGE_STROKE_WIDTH_MIN + 3);
+    isEdgeDimmed = false;
   }
 
   let edgeLabelValue: string | undefined;
@@ -212,6 +217,7 @@ const VariableWidthEdge = ({
   const arrowWidth = strokeWidth * ARROW_WIDTH_MULTIPLIER + ARROW_WIDTH_BASE;
   const arrowDepth = arrowWidth * ARROW_DEPTH_RATIO;
   const markerId = `arrow-${id}`;
+  const tooltipId = `pipe-tooltip-${id}`;
   const targetYOffset = targetPosition === Position.Bottom ? arrowDepth : -arrowDepth;
   const [edgePath, labelX, labelY] = getSmoothStepPath({
     sourceX,
@@ -253,24 +259,45 @@ const VariableWidthEdge = ({
           opacity: isEdgeDimmed ? EDGE_DIMMED_OPACITY : 1,
           transition: `opacity ${EDGE_TRANSITION_MS}ms, stroke ${EDGE_TRANSITION_MS}ms`,
         }}
+      >
+        {edgeTooltip && <title>{edgeTooltip}</title>}
+      </path>
+      <path
+        d={edgePath}
+        className="react-flow__edge-interaction"
+        fill="none"
+        stroke="transparent"
+        strokeWidth={getEdgeInteractionWidth(strokeWidth)}
+        pointerEvents="stroke"
         aria-label={
           renderedEdge
             ? `Inspect pipe ${renderedEdge.sourcePortName ?? renderedEdge.sourcePortId ?? source} to ${renderedEdge.targetPortName ?? renderedEdge.targetPortId ?? target}`
             : `Inspect pipe ${source} to ${target}`
         }
+        aria-describedby={tooltipPosition && edgeTooltip ? tooltipId : undefined}
         role="button"
         tabIndex={0}
+        onMouseEnter={event =>
+          setTooltipPosition({ clientX: event.clientX, clientY: event.clientY })
+        }
+        onMouseMove={event =>
+          setTooltipPosition({ clientX: event.clientX, clientY: event.clientY })
+        }
+        onMouseLeave={() => setTooltipPosition(null)}
+        onFocus={event => {
+          const bounds = event.currentTarget.getBoundingClientRect();
+          setTooltipPosition({ clientX: bounds.left + bounds.width / 2, clientY: bounds.top });
+        }}
+        onBlur={() => setTooltipPosition(null)}
         onKeyDown={event => {
-          if ((event.key === 'Enter' || event.key === ' ') && renderedEdge) {
+          if (isEdgeInspectionKey(event.key) && renderedEdge) {
             event.preventDefault();
             (data as { onInspect?: (edge: DAGData['edges'][number]) => void })?.onInspect?.(
               renderedEdge
             );
           }
         }}
-      >
-        {edgeTooltip && <title>{edgeTooltip}</title>}
-      </path>
+      />
       {edgeLabelValue && (
         <EdgeLabelRenderer>
           <div
@@ -282,11 +309,28 @@ const VariableWidthEdge = ({
               transition: `opacity ${EDGE_TRANSITION_MS}ms`,
             }}
             className="text-[10px] font-medium px-1 py-0.5 rounded bg-background/80 text-muted-foreground border border-border/50"
-            title={edgeTooltip}
+            onMouseEnter={event =>
+              setTooltipPosition({ clientX: event.clientX, clientY: event.clientY })
+            }
+            onMouseMove={event =>
+              setTooltipPosition({ clientX: event.clientX, clientY: event.clientY })
+            }
+            onMouseLeave={() => setTooltipPosition(null)}
           >
             {edgeLabelValue}
           </div>
         </EdgeLabelRenderer>
+      )}
+      {edgeTooltip && (
+        <PointerTooltipPortal hover={tooltipPosition}>
+          <pre
+            id={tooltipId}
+            role="tooltip"
+            className="max-w-80 whitespace-pre-wrap rounded-md border bg-popover p-2 text-[10px] text-popover-foreground shadow-md"
+          >
+            {edgeTooltip}
+          </pre>
+        </PointerTooltipPortal>
       )}
     </>
   );

@@ -4,6 +4,7 @@
 import type { DAGNode, DAGEdge, QueryPlanDataItem } from './types';
 import type { QueryBundle, EntityRef } from '@quent/utils';
 import { buildRelatedOperatorIdsById, Operator, Port, Plan, PlanTree } from '@quent/utils';
+import { parsePortStatistics } from '../../lib/queryBundle.utils';
 
 interface PlanTreeNode extends PlanTree {
   query?: string | null;
@@ -126,6 +127,9 @@ export const getPlanDAG = (
     const targetNode = getNodeEntity(bundle, edge.target, relatedOperatorIdsById);
 
     if (sourceNode && targetNode) {
+      const sourcePort = bundle.entities.ports[edge.source];
+      const targetPort = bundle.entities.ports[edge.target];
+
       // Deduplicate nodes by ID
       if (!nodeMap.has(sourceNode.id)) {
         nodeMap.set(sourceNode.id, sourceNode);
@@ -139,6 +143,10 @@ export const getPlanDAG = (
         source: sourceNode.id,
         target: targetNode.id,
         type: 'smoothstep',
+        sourcePortId: edge.source,
+        targetPortId: edge.target,
+        portStats: parsePortStatistics(sourcePort),
+        targetPortStats: parsePortStatistics(targetPort),
       });
     }
   });

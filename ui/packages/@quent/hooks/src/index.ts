@@ -91,6 +91,9 @@ export {
   useSelectedNodeData,
   useSetSelectedNodeData,
   useSelectedNodesData,
+  useGraphInspection,
+  useSetGraphInspection,
+  useRequestedPipeInspection,
   useHighlightedNodeIds,
   useSetHighlightedNodeIds,
   useEffectiveHighlightedNodeIds,
@@ -104,7 +107,13 @@ export type {
   HighlightedNodeIdsState,
   SelectedNodeDataUpdate,
 } from './atoms/dagControls';
-export type { InspectedNodeData, InspectedOperatorData } from '@quent/utils';
+export type {
+  InspectedNodeData,
+  InspectedOperatorData,
+  InspectedGraphItem,
+  PipeInspection,
+  PipeInspectionKey,
+} from '@quent/utils';
 
 // Data-flow overlay hooks (HOOKS-02: selector hooks over private atoms)
 export {

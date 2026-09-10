@@ -16,7 +16,11 @@ import {
   removeOperatorSelection as removeSelection,
 } from '../dag/operatorSelection';
 import { removeInspectedNodeData, upsertInspectedNodeData } from '../dag/inspectedNodeData';
-import { selectedNodesDataAtom } from './dagControls';
+import {
+  graphInspectionActionAtom,
+  graphInspectionAtom,
+  selectedNodesDataAtom,
+} from './dagControls';
 
 export type OperatorSelectionAction =
   | {
@@ -116,6 +120,16 @@ export const operatorSelectionActionAtom = atom(
 
     set(operatorSelectionAtom, nextSelection);
     set(selectedNodesDataAtom, nextData);
+    const activeId = nextSelection.activeId ?? getLastOperatorSelectionId(nextSelection.selections);
+    const activeData = activeId ? nextData.get(activeId) : undefined;
+    if (action.type !== 'hydrate' || get(graphInspectionAtom)?.kind !== 'pipe') {
+      set(
+        graphInspectionActionAtom,
+        activeId && activeData
+          ? { kind: 'operator', selectionId: activeId, operator: activeData }
+          : null
+      );
+    }
     return getSelectedOperatorIds(nextSelection);
   }
 );

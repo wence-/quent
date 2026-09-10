@@ -8,10 +8,16 @@ import {
   useDataFlowFrame,
   useDataFlowIsPlaying,
   useDataFlowMeta,
+  useGraphInspection,
   useSelectedNodeData,
 } from '@quent/hooks';
 import { cn, type QuantitySpec } from '@quent/utils';
-import { OperatorColorBar, OperatorDataFlowBlock, OperatorDetailsBlock } from '../node-info';
+import {
+  OperatorColorBar,
+  OperatorDataFlowBlock,
+  OperatorDetailsBlock,
+  PipeDetailsBlock,
+} from '../node-info';
 import { DataText } from '../ui/data-text';
 import { thinScrollbarClass } from '../ui/thin-scroll';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '../ui/tabs';
@@ -24,6 +30,7 @@ export const DAGNodeInfoPanel = ({
   quantitySpecs?: { [key: string]: QuantitySpec | undefined };
 }) => {
   const selectedNodeData = useSelectedNodeData();
+  const inspection = useGraphInspection();
   const dataFlowEnabled = useDataFlowEnabled();
   const isPlaying = useDataFlowIsPlaying();
   const dataFlowMeta = useDataFlowMeta();
@@ -31,8 +38,13 @@ export const DAGNodeInfoPanel = ({
   const [isExpanded, setIsExpanded] = useState(false);
   const [activeTab, setActiveTab] = useState('stats');
   const [closedOperatorIds, setClosedOperatorIds] = useState<Set<string>>(() => new Set());
-  const selectedNodeId = selectedNodeData?.nodeId;
-  const hasSelection = selectedNodeData != null;
+  const inspectionKey =
+    inspection?.kind === 'operator'
+      ? inspection.operator.nodeId
+      : inspection?.kind === 'pipe'
+        ? `${inspection.sourcePortId}:${inspection.targetPortId}`
+        : null;
+  const hasSelection = inspection != null;
 
   const showDataFlowTab = dataFlowEnabled && dataFlowMeta != null;
   const isOperatorOpen = (id: string) => !closedOperatorIds.has(id);
@@ -56,7 +68,7 @@ export const DAGNodeInfoPanel = ({
     setIsExpanded(hasSelection);
     setActiveTab('stats');
     setClosedOperatorIds(new Set());
-  }, [hasSelection, selectedNodeId]);
+  }, [hasSelection, inspectionKey]);
 
   useEffect(() => {
     if (isPlaying && isExpanded && showDataFlowTab) {
@@ -66,16 +78,19 @@ export const DAGNodeInfoPanel = ({
 
   const scrollClass = cn('px-4 pb-2 h-48 overflow-auto', thinScrollbarClass);
 
-  const statsContent = selectedNodeData ? (
-    <div className="flex flex-col gap-1 pr-2 pt-1.5">
-      <OperatorDetailsBlock
-        operator={selectedNodeData}
-        quantitySpecs={quantitySpecs}
-        isOpen={isOperatorOpen}
-        onOpenChange={setOperatorOpen}
-      />
-    </div>
-  ) : null;
+  const statsContent =
+    inspection?.kind === 'operator' ? (
+      <div className="flex flex-col gap-1 pr-2 pt-1.5">
+        <OperatorDetailsBlock
+          operator={inspection.operator}
+          quantitySpecs={quantitySpecs}
+          isOpen={isOperatorOpen}
+          onOpenChange={setOperatorOpen}
+        />
+      </div>
+    ) : inspection?.kind === 'pipe' ? (
+      <PipeDetailsBlock pipe={inspection} />
+    ) : null;
 
   const dataFlowContent =
     selectedNodeData && dataFlowMeta && dataFlowFrame ? (
@@ -98,9 +113,9 @@ export const DAGNodeInfoPanel = ({
       <div className="flex items-center justify-between px-4 py-1.5 min-w-0">
         <div className="flex items-center gap-2 min-w-0 overflow-hidden">
           <span className="text-xs text-muted-foreground font-medium flex-shrink-0">
-            Operator Details
+            {inspection?.kind === 'pipe' ? 'Pipe Details' : 'Operator Details'}
           </span>
-          {selectedNodeData && (
+          {inspection?.kind === 'operator' && (
             <>
               <span className="text-muted-foreground text-xs flex-shrink-0">·</span>
               <div
@@ -108,24 +123,33 @@ export const DAGNodeInfoPanel = ({
                 className="flex min-w-0 items-center gap-1.5 overflow-hidden"
               >
                 <OperatorColorBar
-                  operationType={selectedNodeData.operationType}
+                  operationType={inspection.operator.operationType}
                   className="h-3 w-1"
                 />
-                <DataText className="text-xs font-medium truncate" title={selectedNodeData.label}>
-                  {selectedNodeData.label}
+                <DataText
+                  className="text-xs font-medium truncate"
+                  title={inspection.operator.label}
+                >
+                  {inspection.operator.label}
                 </DataText>
                 <DataText className="text-xs text-muted-foreground capitalize px-1.5 py-0.5 bg-muted rounded flex-shrink-0">
-                  {selectedNodeData.operationType}
+                  {inspection.operator.operationType}
                 </DataText>
               </div>
             </>
+          )}
+          {inspection?.kind === 'pipe' && (
+            <DataText className="truncate text-xs font-medium">
+              {inspection.source.port.name ?? inspection.sourcePortId} →{' '}
+              {inspection.target.port.name ?? inspection.targetPortId}
+            </DataText>
           )}
         </div>
         <button
           onClick={() => setIsExpanded(!isExpanded)}
           disabled={!hasSelection}
           className="ml-2 rounded p-1 hover:bg-muted transition-colors cursor-pointer disabled:opacity-40 disabled:cursor-auto disabled:hover:bg-transparent flex-shrink-0"
-          aria-label="Toggle operator details"
+          aria-label="Toggle inspected details"
         >
           {isExpanded ? (
             <ChevronDown className="h-3 w-3 text-muted-foreground" />
@@ -137,7 +161,7 @@ export const DAGNodeInfoPanel = ({
 
       {isExpanded &&
         hasSelection &&
-        (showDataFlowTab ? (
+        (showDataFlowTab && inspection.kind === 'operator' ? (
           <Tabs
             value={activeTab}
             onValueChange={setActiveTab}

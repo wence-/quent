@@ -4,7 +4,10 @@
 import {
   resolveOperatorSelectionCandidates,
   type DAGNode,
+  type DAGEdge,
   type InspectedNodeData,
+  type PipeInspection,
+  type PipeInspectionKey,
 } from '@quent/utils';
 import {
   parseCustomStatistics,
@@ -18,6 +21,53 @@ export interface ResolvedOperatorSelection {
   label: string;
   operatorIds: ReadonlySet<string>;
   inspectedData: InspectedNodeData;
+}
+
+export function inspectPipe(nodes: readonly DAGNode[], edge: DAGEdge): PipeInspection | null {
+  if (!edge.sourcePortId || !edge.targetPortId) {
+    return null;
+  }
+  const sourceNode = nodes.find(node => node.id === edge.source);
+  const targetNode = nodes.find(node => node.id === edge.target);
+  if (!sourceNode || !targetNode) {
+    return null;
+  }
+
+  return {
+    kind: 'pipe',
+    sourcePortId: edge.sourcePortId,
+    targetPortId: edge.targetPortId,
+    source: {
+      operatorId: sourceNode.id,
+      operatorLabel: sourceNode.label,
+      port: {
+        id: edge.sourcePortId,
+        ...(edge.sourcePortName ? { name: edge.sourcePortName } : {}),
+        statistics: edge.portStats ?? [],
+      },
+    },
+    target: {
+      operatorId: targetNode.id,
+      operatorLabel: targetNode.label,
+      port: {
+        id: edge.targetPortId,
+        ...(edge.targetPortName ? { name: edge.targetPortName } : {}),
+        statistics: edge.targetPortStats ?? [],
+      },
+    },
+  };
+}
+
+export function resolvePipeInspection(
+  nodes: readonly DAGNode[],
+  edges: readonly DAGEdge[],
+  key: PipeInspectionKey
+): PipeInspection | null {
+  const edge = edges.find(
+    candidate =>
+      candidate.sourcePortId === key.sourcePortId && candidate.targetPortId === key.targetPortId
+  );
+  return edge ? inspectPipe(nodes, edge) : null;
 }
 
 export interface ResolvedOperatorSelections {

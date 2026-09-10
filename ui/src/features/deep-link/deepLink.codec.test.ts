@@ -41,6 +41,7 @@ const state: DeepLinkStateV2 = {
   selection: {
     planId: 'plan-a',
     operatorNodeIds: ['operator-a', 'operator-b'],
+    pipe: { sourcePortId: 'source-port', targetPortId: 'target-port' },
   },
   resources: {
     expandedRowIds: ['resource-a', 'resource-b'],

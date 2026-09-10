@@ -85,22 +85,18 @@ export function normalizeEdgeWidth(value: number, min: number, max: number): num
   return (Math.log1p(clamped) - Math.log1p(min)) / (Math.log1p(max) - Math.log1p(min));
 }
 
-export function isSelectedJoinBuildEdge(
+export function isSelectedInputEdge(
   edge: DAGEdge,
   selectedNodeId: string | undefined,
   selectedStatistics: readonly Statistic[] | undefined
 ): boolean {
-  if (!selectedNodeId || edge.target !== selectedNodeId || !edge.targetPortName) {
+  if (!selectedNodeId || edge.target !== selectedNodeId || !edge.targetPortId) {
     return false;
   }
-  const selectedInput = selectedStatistics?.find(stat => stat.key === 'join_selected_input')?.value;
-  if (typeof selectedInput === 'string') {
-    return edge.targetPortName === selectedInput;
-  }
-  if (typeof selectedInput === 'number' || typeof selectedInput === 'bigint') {
-    return edge.targetPortName === `input_${selectedInput}`;
-  }
-  return false;
+  const selectedPortId = selectedStatistics?.find(
+    stat => stat.key === 'selected_input_port_id'
+  )?.value;
+  return typeof selectedPortId === 'string' && edge.targetPortId === selectedPortId;
 }
 
 /** Compact operator aggregate. Port data is intentionally not a fallback. */

@@ -7,7 +7,7 @@ import {
   formatEdgeFlowLabel,
   formatEdgeTooltip,
   formatOperatorFlowSummary,
-  isSelectedJoinBuildEdge,
+  isSelectedInputEdge,
   normalizeEdgeWidth,
 } from './flowPresentation';
 
@@ -53,13 +53,13 @@ describe('flow presentation', () => {
   });
 
   it('matches the selected structural Join input', () => {
-    expect(isSelectedJoinBuildEdge(EDGE, 'join', [{ key: 'join_selected_input', value: 1 }])).toBe(
-      true
-    );
     expect(
-      isSelectedJoinBuildEdge(EDGE, 'join', [{ key: 'join_selected_input', value: 'input_0' }])
-    ).toBe(false);
-    expect(isSelectedJoinBuildEdge(EDGE, 'other', [])).toBe(false);
+      isSelectedInputEdge(EDGE, 'join', [{ key: 'selected_input_port_id', value: 'target-port' }])
+    ).toBe(true);
+    expect(isSelectedInputEdge(EDGE, 'join', [{ key: 'join_selected_input', value: 1 }])).toBe(
+      false
+    );
+    expect(isSelectedInputEdge(EDGE, 'other', [])).toBe(false);
   });
 
   it('formats canonical operator aggregates without inventing absent directions', () => {

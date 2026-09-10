@@ -4,7 +4,7 @@
 import { useEffect, useState } from 'react';
 import { fireEvent, render, screen, within } from '@testing-library/react';
 import { Provider } from 'jotai';
-import { useSetSelectedNodeData } from '@quent/hooks';
+import { useSetGraphInspection, useSetSelectedNodeData } from '@quent/hooks';
 import { getOperationTypeColor } from '@quent/utils';
 import { DAGNodeInfoPanel } from './DAGNodeInfoPanel';
 
@@ -19,18 +19,21 @@ function SelectedNode() {
         label: 'Logical join',
         operationType: 'logicaljoin',
         statistics: [{ key: 'logical_rows', value: 10 }],
+        observations: [],
         relatedOperators: [
           {
             nodeId: 'physical-1',
             label: 'Build hash table',
             operationType: 'hashbuild',
             statistics: [{ key: 'build_rows', value: 20 }],
+            observations: [],
           },
           {
             nodeId: 'physical-2',
             label: 'Probe hash table',
             operationType: 'hashprobe',
             statistics: [{ key: 'probe_rows', value: 30 }],
+            observations: [],
           },
         ],
       },
@@ -51,12 +54,14 @@ function SwitchSelectedNode() {
           label: 'Logical join',
           operationType: 'logicaljoin',
           statistics: [],
+          observations: [],
         }
       : {
           nodeId: 'scan',
           label: 'Table scan',
           operationType: 'scan',
           statistics: [],
+          observations: [],
         };
     setSelectedNodeData({ selectionId: data.nodeId, data });
   }, [setSelectedNodeData, showLogical]);
@@ -67,6 +72,45 @@ function SwitchSelectedNode() {
       <DAGNodeInfoPanel />
     </>
   );
+}
+
+function SelectedPipe() {
+  const setGraphInspection = useSetGraphInspection();
+
+  useEffect(() => {
+    setGraphInspection({
+      kind: 'pipe',
+      sourcePortId: 'source-port',
+      targetPortId: 'target-port',
+      source: {
+        operatorId: 'source',
+        operatorLabel: 'Scan',
+        port: {
+          id: 'source-port',
+          name: 'output_0',
+          statistics: [
+            { key: 'rows', value: 0 },
+            { key: 'bytes', value: 10 },
+          ],
+        },
+      },
+      target: {
+        operatorId: 'target',
+        operatorLabel: 'Zip',
+        port: {
+          id: 'target-port',
+          name: 'input_1',
+          statistics: [
+            { key: 'rows', value: 0 },
+            { key: 'bytes', value: 9 },
+            { key: 'waits', value: 1 },
+          ],
+        },
+      },
+    });
+  }, [setGraphInspection]);
+
+  return <DAGNodeInfoPanel />;
 }
 
 describe('DAGNodeInfoPanel', () => {
@@ -144,5 +188,22 @@ describe('DAGNodeInfoPanel', () => {
       'aria-expanded',
       'true'
     );
+  });
+
+  it('shows selected pipe endpoints and preserves agreement distinctions', async () => {
+    render(
+      <Provider>
+        <SelectedPipe />
+      </Provider>
+    );
+
+    expect(await screen.findByText('Pipe Details')).toBeInTheDocument();
+    expect(screen.getByText('Source · Scan')).toBeInTheDocument();
+    expect(screen.getByText('Target · Zip')).toBeInTheDocument();
+    expect(screen.getByText('output_0')).toBeInTheDocument();
+    expect(screen.getByText('input_1')).toBeInTheDocument();
+    expect(screen.getByText('Agrees')).toBeInTheDocument();
+    expect(screen.getByText('Differs')).toBeInTheDocument();
+    expect(screen.getByText('Missing endpoint')).toBeInTheDocument();
   });
 });

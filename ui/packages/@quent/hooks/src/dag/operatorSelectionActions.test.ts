@@ -4,13 +4,18 @@
 import { createStore } from 'jotai';
 import { describe, expect, it } from 'vitest';
 import { operatorSelectionActionAtom, operatorSelectionAtom } from '../atoms/dag';
-import { selectedNodesDataAtom } from '../atoms/dagControls';
+import {
+  graphInspectionActionAtom,
+  graphInspectionAtom,
+  selectedNodesDataAtom,
+} from '../atoms/dagControls';
 
 const scanData = {
   nodeId: 'scan',
   label: 'Scan',
   operationType: 'scan',
   statistics: [],
+  observations: [],
 };
 
 const joinData = {
@@ -18,6 +23,7 @@ const joinData = {
   label: 'Join',
   operationType: 'join',
   statistics: [],
+  observations: [],
 };
 
 const groupedJoinData = {
@@ -194,5 +200,47 @@ describe('operator selection actions', () => {
       ])
     );
     expect(store.get(selectedNodesDataAtom)).toEqual(new Map([['join', groupedJoinData]]));
+  });
+
+  it('inspects a pipe without changing operator selection', () => {
+    const store = createStore();
+    store.set(operatorSelectionActionAtom, {
+      type: 'add',
+      selectionId: 'scan',
+      label: 'Scan',
+      operatorIds: ['scan'],
+      inspectedData: scanData,
+    });
+    const selectionBefore = store.get(operatorSelectionAtom);
+
+    store.set(graphInspectionActionAtom, {
+      kind: 'pipe',
+      sourcePortId: 'source-port',
+      targetPortId: 'target-port',
+      source: {
+        operatorId: 'scan',
+        operatorLabel: 'Scan',
+        port: { id: 'source-port', statistics: [] },
+      },
+      target: {
+        operatorId: 'join',
+        operatorLabel: 'Join',
+        port: { id: 'target-port', statistics: [] },
+      },
+    });
+    store.set(operatorSelectionActionAtom, {
+      type: 'hydrate',
+      selections: [
+        {
+          selectionId: 'scan',
+          label: 'Scan',
+          operatorIds: ['scan'],
+          inspectedData: scanData,
+        },
+      ],
+    });
+
+    expect(store.get(graphInspectionAtom)?.kind).toBe('pipe');
+    expect(store.get(operatorSelectionAtom)).toBe(selectionBefore);
   });
 });

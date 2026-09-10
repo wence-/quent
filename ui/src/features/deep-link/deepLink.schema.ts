@@ -83,6 +83,13 @@ const SelectionSchema = z
       .max(MAX_SELECTED_NODE_IDS)
       .transform(uniqueSorted)
       .optional(),
+    pipe: z
+      .object({
+        sourcePortId: IdSchema,
+        targetPortId: IdSchema,
+      })
+      .strip()
+      .optional(),
   })
   .strip();
 

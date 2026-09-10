@@ -41,3 +41,28 @@ export interface InspectedPortData {
 export interface InspectedNodeData extends InspectedOperatorData {
   relatedOperators?: InspectedOperatorData[];
 }
+
+export interface PipeInspectionKey {
+  sourcePortId: string;
+  targetPortId: string;
+}
+
+export interface InspectedPipeEndpoint {
+  operatorId: string;
+  operatorLabel: string;
+  port: InspectedPortData;
+}
+
+export interface OperatorInspection {
+  kind: 'operator';
+  selectionId: string;
+  operator: InspectedNodeData;
+}
+
+export interface PipeInspection extends PipeInspectionKey {
+  kind: 'pipe';
+  source: InspectedPipeEndpoint;
+  target: InspectedPipeEndpoint;
+}
+
+export type InspectedGraphItem = OperatorInspection | PipeInspection;

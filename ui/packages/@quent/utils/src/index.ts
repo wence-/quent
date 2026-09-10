@@ -88,6 +88,11 @@ export type {
   InspectedOperatorObservation,
   InspectedPortData,
   InspectedNodeData,
+  PipeInspectionKey,
+  InspectedPipeEndpoint,
+  OperatorInspection,
+  PipeInspection,
+  InspectedGraphItem,
 } from './operatorTypes';
 export {
   buildRelatedOperatorIdsById,

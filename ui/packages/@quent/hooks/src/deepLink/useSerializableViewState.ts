@@ -29,6 +29,8 @@ import {
   selectedEdgeColorFieldAtom,
   selectedEdgeWidthFieldAtom,
   selectedNodeLabelFieldAtom,
+  graphInspectionAtom,
+  requestedPipeInspectionAtom,
 } from '../atoms/dagControls';
 import {
   aggModeAtomFamily,
@@ -70,6 +72,7 @@ export interface SerializableViewState {
   selection: {
     planId: string;
     operatorNodeIds: string[];
+    pipe: { sourcePortId: string; targetPortId: string } | null;
   };
   dag: SerializableDagControls;
   dataFlow: SerializableDataFlowState;
@@ -80,6 +83,7 @@ export interface HydratableViewState {
   selection?: {
     planId?: string;
     operatorNodeIds?: readonly string[];
+    pipe?: { sourcePortId: string; targetPortId: string } | null;
   };
   dag?: Partial<SerializableDagControls>;
   dataFlow?: Partial<SerializableDataFlowState>;
@@ -109,6 +113,7 @@ export function useSerializableViewState({
       selection: {
         planId: store.get(selectedPlanIdAtom),
         operatorNodeIds: [...store.get(selectedNodeIdsAtom)].sort(),
+        pipe: store.get(requestedPipeInspectionAtom),
       },
       dag: {
         nodeColorField: store.get(selectedColorField),
@@ -159,6 +164,10 @@ export function useSerializableViewState({
           type: 'replace',
           selections: resolveOperatorSelections(operators, state.selection.operatorNodeIds),
         });
+      }
+      if (state.selection?.pipe !== undefined) {
+        store.set(requestedPipeInspectionAtom, state.selection.pipe);
+        store.set(graphInspectionAtom, null);
       }
 
       const dag = state.dag;

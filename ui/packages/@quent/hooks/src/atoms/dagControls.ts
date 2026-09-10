@@ -12,6 +12,8 @@ import type {
   NodeLabelField,
   DagLayoutDirection,
   InspectedNodeData,
+  InspectedGraphItem,
+  PipeInspectionKey,
 } from '@quent/utils';
 import { NODE_LABEL_FIELD, DAG_LAYOUT_DIRECTION } from '@quent/utils';
 import type { ContinuousPaletteName } from '@quent/utils';
@@ -39,6 +41,30 @@ export interface HighlightedNodeIdsState {
 /** Inspected details for every selected operator, keyed by selection id. */
 export const selectedNodesDataAtom = atom<ReadonlyMap<string, InspectedNodeData>>(new Map());
 
+/** Persistent graph inspection, independent from canonical operator filtering. */
+export const graphInspectionAtom = atom<InspectedGraphItem | null>(null);
+
+/** Structural pipe key requested by direct interaction or deep-link hydration. */
+export const requestedPipeInspectionAtom = atom<PipeInspectionKey | null>(null);
+
+export const graphInspectionActionAtom = atom(
+  null,
+  (get, set, inspection: InspectedGraphItem | null) => {
+    set(graphInspectionAtom, inspection);
+    const nextKey =
+      inspection?.kind === 'pipe'
+        ? { sourcePortId: inspection.sourcePortId, targetPortId: inspection.targetPortId }
+        : null;
+    const currentKey = get(requestedPipeInspectionAtom);
+    if (
+      currentKey?.sourcePortId !== nextKey?.sourcePortId ||
+      currentKey?.targetPortId !== nextKey?.targetPortId
+    ) {
+      set(requestedPipeInspectionAtom, nextKey);
+    }
+  }
+);
+
 export interface SelectedNodeDataUpdate {
   selectionId: string;
   data: InspectedNodeData;
@@ -47,6 +73,13 @@ export interface SelectedNodeDataUpdate {
 /** Last pinned node; writing replaces the whole inspected-node map. */
 export const selectedNodeDataAtom = atom(
   get => {
+    const inspection = get(graphInspectionAtom);
+    if (inspection?.kind === 'pipe') {
+      return null;
+    }
+    if (inspection?.kind === 'operator') {
+      return inspection.operator;
+    }
     const map = get(selectedNodesDataAtom);
     let last: InspectedNodeData | null = null;
     for (const value of map.values()) {
@@ -58,6 +91,12 @@ export const selectedNodeDataAtom = atom(
     set(
       selectedNodesDataAtom,
       value == null ? new Map() : new Map([[value.selectionId, value.data]])
+    );
+    set(
+      graphInspectionActionAtom,
+      value == null
+        ? null
+        : { kind: 'operator', selectionId: value.selectionId, operator: value.data }
     );
   }
 );

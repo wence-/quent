@@ -39,6 +39,7 @@ import {
   useEffectiveHighlightedNodeIds,
   useSetDagDisplayedNodeIds,
   useSelectedDagLayoutDirection,
+  useSelectedOperatorsData,
   useDataFlowEnabled,
   useDataFlowMeta,
   COLOR_REGISTRY_KEYS,
@@ -59,6 +60,12 @@ import {
   type QuantitySpec,
   type SelectedOperatorGroupData,
 } from '@quent/utils';
+import {
+  formatEdgeFlowLabel,
+  formatEdgeTooltip,
+  isSelectedJoinBuildEdge,
+  normalizeEdgeWidth,
+} from '../services/query-plan/flowPresentation';
 
 // Edge geometry constants
 const EDGE_STROKE_WIDTH_DEFAULT = 1.5;
@@ -70,6 +77,7 @@ const ARROW_WIDTH_MULTIPLIER = 1.5;
 const ARROW_WIDTH_BASE = 8;
 const ARROW_DEPTH_RATIO = 0.6;
 const FALLBACK_NORMALIZED_T = 0.5; // used when min === max
+const SELECTED_BUILD_EDGE_COLOR = '#d97706';
 
 // Layout constants
 const FIT_VIEW_PADDING = 0.1;
@@ -98,6 +106,7 @@ const VariableWidthEdge = ({
   const edgeColoring = useEdgeColoring();
   const edgePalette = useEdgeColorPalette()[0];
   const selectedOperatorIds = useSelectedOperatorIds();
+  const selectedOperatorsData = useSelectedOperatorsData();
   const highlightedNodeIds = useEffectiveHighlightedNodeIds().ids;
   const [edgeWidthField] = useSelectedEdgeWidthField();
   const [edgeColorField] = useSelectedEdgeColorField();
@@ -107,10 +116,7 @@ const VariableWidthEdge = ({
   if (edgeWidthConfig) {
     const v = edgeWidthConfig.values.get(id);
     if (v !== undefined) {
-      const t =
-        edgeWidthConfig.max > edgeWidthConfig.min
-          ? (v - edgeWidthConfig.min) / (edgeWidthConfig.max - edgeWidthConfig.min)
-          : FALLBACK_NORMALIZED_T;
+      const t = normalizeEdgeWidth(v, edgeWidthConfig.min, edgeWidthConfig.max);
       strokeWidth = EDGE_STROKE_WIDTH_MIN + t * EDGE_STROKE_WIDTH_RANGE;
     }
   }
@@ -146,9 +152,23 @@ const VariableWidthEdge = ({
     highlightedNodeIds,
   });
   const isEdgeDimmed = edgeDimmed || dimFromInteraction;
+  const renderedEdge = (data as { edge?: DAGData['edges'][number] })?.edge;
+  const isBuildEdge =
+    renderedEdge !== undefined &&
+    selectedOperatorsData.some(operator =>
+      isSelectedJoinBuildEdge(renderedEdge, operator.nodeId, operator.statistics)
+    );
+  if (isBuildEdge) {
+    edgeColor = SELECTED_BUILD_EDGE_COLOR;
+    strokeWidth = Math.max(strokeWidth, EDGE_STROKE_WIDTH_MIN + 2);
+  }
 
   let edgeLabelValue: string | undefined;
-  if (edgeColoring) {
+  const flowLabel = renderedEdge ? formatEdgeFlowLabel(renderedEdge) : null;
+  const edgeTooltip = renderedEdge ? formatEdgeTooltip(renderedEdge) : '';
+  if (flowLabel) {
+    edgeLabelValue = flowLabel;
+  } else if (edgeColoring) {
     if (edgeColoring.type === 'continuous') {
       const v = edgeColoring.values.get(id);
       if (v !== undefined) {
@@ -211,18 +231,21 @@ const VariableWidthEdge = ({
           opacity: isEdgeDimmed ? EDGE_DIMMED_OPACITY : 1,
           transition: `opacity ${EDGE_TRANSITION_MS}ms, stroke ${EDGE_TRANSITION_MS}ms`,
         }}
-      />
+      >
+        {edgeTooltip && <title>{edgeTooltip}</title>}
+      </path>
       {edgeLabelValue && (
         <EdgeLabelRenderer>
           <div
             style={{
               position: 'absolute',
               transform: `translate(-50%, -50%) translate(${labelX}px,${labelY}px)`,
-              pointerEvents: 'none',
+              pointerEvents: 'all',
               opacity: isEdgeDimmed ? EDGE_DIMMED_OPACITY : 1,
               transition: `opacity ${EDGE_TRANSITION_MS}ms`,
             }}
             className="text-[10px] font-medium px-1 py-0.5 rounded bg-background/80 text-muted-foreground border border-border/50"
+            title={edgeTooltip}
           >
             {edgeLabelValue}
           </div>
@@ -445,7 +468,7 @@ const FlowLayout = ({
       target: edge.target,
       type: 'smoothstep',
       // Pass isDark down to edge components via data
-      data: { isDark },
+      data: { isDark, edge },
     }));
 
     return { flowNodes, flowEdges };

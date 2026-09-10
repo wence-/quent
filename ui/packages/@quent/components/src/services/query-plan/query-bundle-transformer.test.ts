@@ -288,6 +288,8 @@ describe('getPlanDAG', () => {
     const op2 = makeOperator('op2', { typeName: 'Join' });
     const port1 = makePort('port1', 'op1');
     const port2 = makePort('port2', 'op2');
+    port1.instance_name = 'output_0';
+    port2.instance_name = 'input_1';
     const plan = makePlan('p1', { edges: [{ source: 'port1', target: 'port2' }] });
     const bundle = makeBundle({ p1: plan }, { operators: { op1, op2 }, ports: { port1, port2 } });
 
@@ -295,6 +297,8 @@ describe('getPlanDAG', () => {
 
     expect(edge.sourcePortId).toBe('port1');
     expect(edge.targetPortId).toBe('port2');
+    expect(edge.sourcePortName).toBe('output_0');
+    expect(edge.targetPortName).toBe('input_1');
   });
 
   it('hydrates edge statistics from both structural ports', () => {

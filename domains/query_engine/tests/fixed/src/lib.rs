@@ -234,6 +234,7 @@ pub fn emit(ctx: &SimulatorContext) {
 
     // Statistics at 6.1s (op + port stats share one timestamp).
     emit_operator_statistics(ctx);
+    emit_operator_observations(ctx);
     emit_port_statistics(ctx);
 
     // Teardown: query exit @ 6.3s; all resource finalizing @ 6.5s; all
@@ -570,6 +571,25 @@ fn emit_operator_statistics(ctx: &SimulatorContext) {
             })
         );
     }
+}
+
+// Producer-defined observations intentionally arrive out of timestamp order.
+fn emit_operator_observations(ctx: &SimulatorContext) {
+    let operator = ctx.operator_observer().create(PHYS_FINAL_AGG);
+    ts!(
+        3_900_000_000,
+        operator.observation(operator::Observation {
+            kind: "vendor.snapshot".to_string(),
+            custom_attributes: vec![DynamicAttribute::u64("retained_rows", 42)].into(),
+        })
+    );
+    ts!(
+        3_800_000_000,
+        operator.observation(operator::Observation {
+            kind: "algorithm.choice".to_string(),
+            custom_attributes: vec![DynamicAttribute::string("side", "left")].into(),
+        })
+    );
 }
 
 // Port statistics — one per port (19 total), all at 6.1s (same group as op stats).

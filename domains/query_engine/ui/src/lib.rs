@@ -193,6 +193,16 @@ pub struct OperatorStatistics {
 }
 
 #[derive(TS, Debug, Serialize)]
+pub struct OperatorObservation {
+    /// Time of the observation relative to the query epoch.
+    pub time_s: TimeSec,
+    /// Producer-defined observation kind.
+    pub kind: String,
+    /// Arbitrary producer-defined attributes.
+    pub custom_attributes: HashMap<String, Option<DynamicValue>>,
+}
+
+#[derive(TS, Debug, Serialize)]
 pub struct Operator {
     /// The ID of this [`Operator`].
     pub id: Uuid,
@@ -208,6 +218,8 @@ pub struct Operator {
 
     /// The dynamic attributes of this [`Operator`].
     pub custom_attributes: HashMap<String, Option<DynamicValue>>,
+    /// Timestamped producer-defined observations, ordered by event time.
+    pub observations: Vec<OperatorObservation>,
     /// The statistics of this [`Operator`].
     ///
     /// These are attributes that are typically gathered after the work

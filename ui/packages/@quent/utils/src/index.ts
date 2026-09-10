@@ -95,6 +95,7 @@ export type {
   OperatorSelectionState,
   SelectedOperatorData,
   SelectedOperatorGroupData,
+  SelectedOperatorPortData,
 } from './operatorTypes';
 export {
   buildRelatedOperatorIdsById,

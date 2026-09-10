@@ -20,6 +20,33 @@ const NODES: DAGNode[] = [
 ];
 
 describe('resolveSelectedOperatorsFromNodes', () => {
+  it('retains structural port identity and statistics for details', () => {
+    const node: DAGNode = {
+      id: 'join',
+      label: 'Join',
+      type: 'join',
+      metadata: {
+        ports: [
+          {
+            id: 'port-1',
+            operator_id: 'join',
+            instance_name: 'input_0',
+            statistics: { custom_statistics: { rows: { UInt64: 42 } } },
+          },
+        ],
+      },
+    };
+
+    const resolved = resolveSelectedOperatorsFromNodes([node], new Set(['join']));
+    expect(resolved.selections[0]?.selectedData.ports).toEqual([
+      {
+        id: 'port-1',
+        name: 'input_0',
+        statistics: [{ key: 'rows', value: 42 }],
+      },
+    ]);
+  });
+
   it('reconstructs multiple physical and higher-level selections', () => {
     const resolved = resolveSelectedOperatorsFromNodes(
       NODES,

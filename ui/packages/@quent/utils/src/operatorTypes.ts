@@ -21,6 +21,13 @@ export interface SelectedOperatorData {
   label: string;
   operationType: string;
   statistics: Array<{ key: string; value: StatValue; quantity?: string }>;
+  ports?: SelectedOperatorPortData[];
+}
+
+export interface SelectedOperatorPortData {
+  id: string;
+  name?: string;
+  statistics: Array<{ key: string; value: StatValue }>;
 }
 
 export interface SelectedOperatorGroupData extends SelectedOperatorData {

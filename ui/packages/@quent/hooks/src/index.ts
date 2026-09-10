@@ -90,6 +90,9 @@ export {
   useSelectedNodeLabelField,
   useSelectedDagLayoutDirection,
   useSelectedOperatorsData,
+  useGraphInspection,
+  useSetGraphInspection,
+  useRequestedPipeInspection,
   useHighlightedNodeIds,
   useSetHighlightedNodeIds,
   useEffectiveHighlightedNodeIds,
@@ -99,7 +102,13 @@ export {
   useSetDagDisplayedNodeIds,
 } from './dag/dagControlSelectors';
 export type { HoveredStatInfo, HighlightedNodeIdsState } from './atoms/dagControls';
-export type { SelectedOperatorData, SelectedOperatorGroupData } from '@quent/utils';
+export type {
+  SelectedOperatorData,
+  SelectedOperatorGroupData,
+  InspectedGraphItem,
+  PipeInspection,
+  PipeInspectionKey,
+} from '@quent/utils';
 
 // Data-flow overlay hooks (HOOKS-02: selector hooks over private atoms)
 export {

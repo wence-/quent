@@ -40,6 +40,9 @@ import {
   useSetDagDisplayedNodeIds,
   useSelectedDagLayoutDirection,
   useSelectedOperatorsData,
+  useGraphInspection,
+  useRequestedPipeInspection,
+  useSetGraphInspection,
   useDataFlowEnabled,
   useDataFlowMeta,
   COLOR_REGISTRY_KEYS,
@@ -49,7 +52,11 @@ import { calculateLayout, NODE_LAYOUT_WIDTH, NODE_LAYOUT_HEIGHT, FLOW_BAR_HEIGHT
 import type { DAGData } from '../services/query-plan/types';
 import { QueryPlanNode, type QueryPlanNodeData } from '../query-plan/QueryPlanNode';
 import { DAGLegend } from './DAGLegend';
-import { resolveSelectedOperatorsFromNodes } from './dagSelection';
+import {
+  inspectPipe,
+  resolvePipeInspection,
+  resolveSelectedOperatorsFromNodes,
+} from './dagSelection';
 import { shouldDimEdgeFromInteraction } from './edgeOpacity';
 import {
   parseCustomStatistics,
@@ -67,7 +74,7 @@ import {
 import {
   formatEdgeFlowLabel,
   formatEdgeTooltip,
-  isSelectedJoinBuildEdge,
+  isSelectedInputEdge,
   normalizeEdgeWidth,
 } from '../services/query-plan/flowPresentation';
 
@@ -82,6 +89,7 @@ const ARROW_WIDTH_BASE = 8;
 const ARROW_DEPTH_RATIO = 0.6;
 const FALLBACK_NORMALIZED_T = 0.5; // used when min === max
 const SELECTED_BUILD_EDGE_COLOR = '#d97706';
+const INSPECTED_PIPE_COLOR = '#2563eb';
 
 // Layout constants
 const FIT_VIEW_PADDING = 0.1;
@@ -111,6 +119,7 @@ const VariableWidthEdge = ({
   const edgePalette = useEdgeColorPalette()[0];
   const selectedOperatorIds = useSelectedOperatorIds();
   const selectedOperatorsData = useSelectedOperatorsData();
+  const inspection = useGraphInspection();
   const highlightedNodeIds = useEffectiveHighlightedNodeIds().ids;
   const [edgeWidthField] = useSelectedEdgeWidthField();
   const [edgeColorField] = useSelectedEdgeColorField();
@@ -160,11 +169,20 @@ const VariableWidthEdge = ({
   const isBuildEdge =
     renderedEdge !== undefined &&
     selectedOperatorsData.some(operator =>
-      isSelectedJoinBuildEdge(renderedEdge, operator.nodeId, operator.statistics)
+      isSelectedInputEdge(renderedEdge, operator.nodeId, operator.statistics)
     );
   if (isBuildEdge) {
     edgeColor = SELECTED_BUILD_EDGE_COLOR;
     strokeWidth = Math.max(strokeWidth, EDGE_STROKE_WIDTH_MIN + 2);
+  }
+  const isInspectedPipe =
+    renderedEdge !== undefined &&
+    inspection?.kind === 'pipe' &&
+    renderedEdge.sourcePortId === inspection.sourcePortId &&
+    renderedEdge.targetPortId === inspection.targetPortId;
+  if (isInspectedPipe) {
+    edgeColor = INSPECTED_PIPE_COLOR;
+    strokeWidth = Math.max(strokeWidth, EDGE_STROKE_WIDTH_MIN + 3);
   }
 
   let edgeLabelValue: string | undefined;
@@ -234,6 +252,21 @@ const VariableWidthEdge = ({
           fill: 'none',
           opacity: isEdgeDimmed ? EDGE_DIMMED_OPACITY : 1,
           transition: `opacity ${EDGE_TRANSITION_MS}ms, stroke ${EDGE_TRANSITION_MS}ms`,
+        }}
+        aria-label={
+          renderedEdge
+            ? `Inspect pipe ${renderedEdge.sourcePortName ?? renderedEdge.sourcePortId ?? source} to ${renderedEdge.targetPortName ?? renderedEdge.targetPortId ?? target}`
+            : `Inspect pipe ${source} to ${target}`
+        }
+        role="button"
+        tabIndex={0}
+        onKeyDown={event => {
+          if ((event.key === 'Enter' || event.key === ' ') && renderedEdge) {
+            event.preventDefault();
+            (data as { onInspect?: (edge: DAGData['edges'][number]) => void })?.onInspect?.(
+              renderedEdge
+            );
+          }
         }}
       >
         {edgeTooltip && <title>{edgeTooltip}</title>}
@@ -345,6 +378,8 @@ const FlowLayout = ({
   const updateOperatorSelection = useOperatorSelectionActions();
   const setDagDisplayedNodeIds = useSetDagDisplayedNodeIds();
   const selectedOperatorIds = useSelectedOperatorIds();
+  const requestedPipeInspection = useRequestedPipeInspection();
+  const setGraphInspection = useSetGraphInspection();
   const [layoutDirection] = useSelectedDagLayoutDirection();
   const dataFlowEnabled = useDataFlowEnabled();
   const dataFlowMeta = useDataFlowMeta();
@@ -440,6 +475,24 @@ const FlowLayout = ({
     return result;
   }, [data.nodes, data.quantitySpecs]);
 
+  const inspectEdge = useCallback(
+    (edge: DAGData['edges'][number]) => {
+      const pipe = inspectPipe(data.nodes, edge);
+      if (pipe) {
+        setGraphInspection(pipe);
+      }
+    },
+    [data.nodes, setGraphInspection]
+  );
+
+  useEffect(() => {
+    if (!requestedPipeInspection) {
+      return;
+    }
+    const pipe = resolvePipeInspection(data.nodes, data.edges, requestedPipeInspection);
+    setGraphInspection(pipe);
+  }, [data.edges, data.nodes, requestedPipeInspection, setGraphInspection]);
+
   // Convert DAGData to ReactFlow format
   const convertToReactFlow = useCallback(() => {
     // Determine which nodes have incoming/outgoing edges
@@ -479,11 +532,21 @@ const FlowLayout = ({
       target: edge.target,
       type: 'smoothstep',
       // Pass isDark down to edge components via data
-      data: { isDark, edge },
+      data: { isDark, edge, onInspect: inspectEdge },
     }));
 
     return { flowNodes, flowEdges };
-  }, [data, isDark, layoutDirection, flowBarVisible]);
+  }, [data, isDark, layoutDirection, flowBarVisible, inspectEdge]);
+
+  const handleEdgeClick = useCallback(
+    (_event: MouseEvent, edge: Edge): void => {
+      const renderedEdge = (edge.data as { edge?: DAGData['edges'][number] })?.edge;
+      if (renderedEdge) {
+        inspectEdge(renderedEdge);
+      }
+    },
+    [inspectEdge]
+  );
 
   const handleNodeClick = useCallback(
     (_event: MouseEvent, node: Node<QueryPlanNodeData>): void => {
@@ -580,6 +643,7 @@ const FlowLayout = ({
       onNodesChange={onNodesChange}
       onEdgesChange={onEdgesChange}
       onNodeClick={handleNodeClick}
+      onEdgeClick={handleEdgeClick}
       onPaneClick={handlePaneClick}
       onMoveStart={handleMoveStart}
       proOptions={{ hideAttribution: true }}

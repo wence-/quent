@@ -18,7 +18,11 @@ import {
   removeSelectedOperatorData,
   upsertSelectedOperatorData,
 } from '../dag/selectedOperatorData';
-import { selectedOperatorsDataAtom } from './dagControls';
+import {
+  graphInspectionActionAtom,
+  graphInspectionAtom,
+  selectedOperatorsDataAtom,
+} from './dagControls';
 
 export type OperatorSelectionAction =
   | {
@@ -121,6 +125,19 @@ export const operatorSelectionActionAtom = atom(
 
     set(operatorSelectionAtom, nextSelection);
     set(selectedOperatorsDataAtom, nextData);
+    let activeId: string | undefined;
+    for (const selectionId of nextSelection.selections.keys()) {
+      activeId = selectionId;
+    }
+    const activeData = activeId ? nextData.get(activeId) : undefined;
+    if (action.type !== 'hydrate' || get(graphInspectionAtom)?.kind !== 'pipe') {
+      set(
+        graphInspectionActionAtom,
+        activeId && activeData
+          ? { kind: 'operator', selectionId: activeId, operator: activeData }
+          : null
+      );
+    }
     return getSelectedOperatorIds(nextSelection);
   }
 );

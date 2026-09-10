@@ -66,7 +66,7 @@ function StatisticRows({
   ));
 }
 
-function PortRows({ port }: { port: SelectedOperatorPortData }) {
+function PortRows({ port, selected }: { port: SelectedOperatorPortData; selected: boolean }) {
   const direction = port.statistics.find(stat => stat.key === 'direction')?.value;
   return (
     <div className="border-t first:border-t-0 py-1">
@@ -74,6 +74,9 @@ function PortRows({ port }: { port: SelectedOperatorPortData }) {
         <DataText>{port.name ?? port.id}</DataText>
         {direction != null && (
           <DataText className="text-muted-foreground">{String(direction)}</DataText>
+        )}
+        {selected && (
+          <DataText className="rounded bg-primary/15 px-1 text-primary">Selected input</DataText>
         )}
       </div>
       <StatisticRows statistics={port.statistics} />
@@ -104,6 +107,9 @@ export const OperatorStatFields = ({
 }) => {
   const sections = sectionOperatorStatistics(operator.statistics);
   const observations = operator.observations ?? [];
+  const selectedInputPortId = operator.statistics.find(
+    statistic => statistic.key === 'selected_input_port_id'
+  )?.value;
 
   return (
     <>
@@ -128,7 +134,7 @@ export const OperatorStatFields = ({
             Ports
           </h4>
           {operator.ports.map(port => (
-            <PortRows key={port.id} port={port} />
+            <PortRows key={port.id} port={port} selected={port.id === selectedInputPortId} />
           ))}
         </section>
       )}

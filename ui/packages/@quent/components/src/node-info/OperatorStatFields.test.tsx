@@ -18,6 +18,7 @@ describe('OperatorStatFields', () => {
             { key: 'join_selected_input', value: 1 },
             { key: 'build_rows', value: 25 },
             { key: 'tasks_completed', value: 2 },
+            { key: 'selected_input_port_id', value: 'port-1' },
           ],
           observations: [
             {
@@ -50,6 +51,7 @@ describe('OperatorStatFields', () => {
       expect(screen.queryByRole('heading', { name: oldHeading })).not.toBeInTheDocument();
     }
     expect(screen.getByText('input_1')).toBeInTheDocument();
+    expect(screen.getByText('Selected input')).toBeInTheDocument();
     expect(screen.getByText('join_build_selected')).toBeInTheDocument();
     expect(screen.getAllByText('right')).toHaveLength(2);
     expect(screen.getByText('left')).toBeInTheDocument();

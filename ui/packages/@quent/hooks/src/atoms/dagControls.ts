@@ -12,6 +12,8 @@ import type {
   NodeLabelField,
   DagLayoutDirection,
   SelectedOperatorGroupData,
+  InspectedGraphItem,
+  PipeInspectionKey,
 } from '@quent/utils';
 import { NODE_LABEL_FIELD, DAG_LAYOUT_DIRECTION } from '@quent/utils';
 import type { ContinuousPaletteName } from '@quent/utils';
@@ -40,6 +42,31 @@ export interface HighlightedNodeIdsState {
 export const selectedOperatorsDataAtom = atom<ReadonlyMap<string, SelectedOperatorGroupData>>(
   new Map()
 );
+
+/** Persistent graph inspection, independent from canonical operator filtering. */
+export const graphInspectionAtom = atom<InspectedGraphItem | null>(null);
+
+/** Structural pipe key requested by direct interaction or deep-link hydration. */
+export const requestedPipeInspectionAtom = atom<PipeInspectionKey | null>(null);
+
+export const graphInspectionActionAtom = atom(
+  null,
+  (get, set, inspection: InspectedGraphItem | null) => {
+    set(graphInspectionAtom, inspection);
+    const nextKey =
+      inspection?.kind === 'pipe'
+        ? { sourcePortId: inspection.sourcePortId, targetPortId: inspection.targetPortId }
+        : null;
+    const currentKey = get(requestedPipeInspectionAtom);
+    if (
+      currentKey?.sourcePortId !== nextKey?.sourcePortId ||
+      currentKey?.targetPortId !== nextKey?.targetPortId
+    ) {
+      set(requestedPipeInspectionAtom, nextKey);
+    }
+  }
+);
+
 
 /** Consolidated hover/highlight state shared between table and DAG. */
 export const highlightedNodeIdsAtom = atom<HighlightedNodeIdsState>({

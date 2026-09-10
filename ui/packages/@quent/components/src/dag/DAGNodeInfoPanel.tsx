@@ -9,9 +9,15 @@ import {
   useDataFlowIsPlaying,
   useDataFlowMeta,
   useSelectedOperatorsData,
+  useGraphInspection,
 } from '@quent/hooks';
 import { cn, type QuantitySpec } from '@quent/utils';
-import { OperatorColorBar, OperatorDataFlowBlock, OperatorDetailsBlock } from '../node-info';
+import {
+  OperatorColorBar,
+  OperatorDataFlowBlock,
+  OperatorDetailsBlock,
+  PipeDetailsBlock,
+} from '../node-info';
 import { DataText } from '../ui/data-text';
 import { thinScrollbarClass } from '../ui/thin-scroll';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '../ui/tabs';
@@ -24,6 +30,7 @@ export const DAGNodeInfoPanel = ({
   quantitySpecs?: { [key: string]: QuantitySpec | undefined };
 }) => {
   const selectedOperators = useSelectedOperatorsData();
+  const inspection = useGraphInspection();
   const dataFlowEnabled = useDataFlowEnabled();
   const isPlaying = useDataFlowIsPlaying();
   const dataFlowMeta = useDataFlowMeta();
@@ -31,10 +38,15 @@ export const DAGNodeInfoPanel = ({
   const [isExpanded, setIsExpanded] = useState(false);
   const [activeTab, setActiveTab] = useState('stats');
   const [closedOperatorIds, setClosedOperatorIds] = useState<Set<string>>(() => new Set());
-  const hasSelection = selectedOperators.length > 0;
+  const isPipeInspection = inspection?.kind === 'pipe';
+  const hasSelection = isPipeInspection || selectedOperators.length > 0;
   const showHeaders = selectedOperators.length > 1;
   const selectedOperator = selectedOperators[0];
   const selectedOperatorIdsKey = selectedOperators.map(operator => operator.nodeId).join('\0');
+  const inspectionKey =
+    inspection?.kind === 'pipe'
+      ? `${inspection.sourcePortId}:${inspection.targetPortId}`
+      : selectedOperatorIdsKey;
 
   const showDataFlowTab = dataFlowEnabled && dataFlowMeta != null;
   const isOperatorOpen = (id: string) => !closedOperatorIds.has(id);
@@ -63,7 +75,7 @@ export const DAGNodeInfoPanel = ({
 
   useEffect(() => {
     setClosedOperatorIds(new Set());
-  }, [selectedOperatorIdsKey]);
+  }, [hasSelection, inspectionKey]);
 
   useEffect(() => {
     if (isPlaying && isExpanded && showDataFlowTab) {
@@ -73,7 +85,9 @@ export const DAGNodeInfoPanel = ({
 
   const scrollClass = cn('px-4 pb-2 h-48 overflow-auto', thinScrollbarClass);
 
-  const statsContent = hasSelection ? (
+  const statsContent = isPipeInspection ? (
+    <PipeDetailsBlock pipe={inspection} />
+  ) : selectedOperators.length > 0 ? (
     <div className="flex flex-col gap-1 pr-2 pt-1.5">
       {selectedOperators.map((operator, index) => (
         <div key={operator.nodeId} className={index > 0 ? 'border-t pt-1.5 mt-1.5' : ''}>
@@ -113,9 +127,9 @@ export const DAGNodeInfoPanel = ({
       <div className="flex items-center justify-between px-4 py-1.5 min-w-0">
         <div className="flex items-center gap-2 min-w-0 overflow-hidden">
           <span className="text-xs text-muted-foreground font-medium flex-shrink-0">
-            Operator Details
+            {inspection?.kind === 'pipe' ? 'Pipe Details' : 'Operator Details'}
           </span>
-          {selectedOperator && (
+          {!isPipeInspection && selectedOperator && (
             <>
               <span className="text-muted-foreground text-xs flex-shrink-0">·</span>
               <div
@@ -139,12 +153,18 @@ export const DAGNodeInfoPanel = ({
               </div>
             </>
           )}
+          {inspection?.kind === 'pipe' && (
+            <DataText className="truncate text-xs font-medium">
+              {inspection.source.port.name ?? inspection.sourcePortId} →{' '}
+              {inspection.target.port.name ?? inspection.targetPortId}
+            </DataText>
+          )}
         </div>
         <button
           onClick={() => setIsExpanded(!isExpanded)}
           disabled={!hasSelection}
           className="ml-2 rounded p-1 hover:bg-muted transition-colors cursor-pointer disabled:opacity-40 disabled:cursor-auto disabled:hover:bg-transparent flex-shrink-0"
-          aria-label="Toggle operator details"
+          aria-label="Toggle inspected details"
         >
           {isExpanded ? (
             <ChevronDown className="h-3 w-3 text-muted-foreground" />
@@ -156,7 +176,7 @@ export const DAGNodeInfoPanel = ({
 
       {isExpanded &&
         hasSelection &&
-        (showDataFlowTab ? (
+        (showDataFlowTab && !isPipeInspection ? (
           <Tabs
             value={activeTab}
             onValueChange={setActiveTab}

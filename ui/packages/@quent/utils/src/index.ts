@@ -97,6 +97,11 @@ export type {
   SelectedOperatorGroupData,
   SelectedOperatorObservation,
   SelectedOperatorPortData,
+  PipeInspectionKey,
+  InspectedPipeEndpoint,
+  OperatorInspection,
+  PipeInspection,
+  InspectedGraphItem,
 } from './operatorTypes';
 export {
   buildRelatedOperatorIdsById,

@@ -23,6 +23,9 @@ import {
   effectiveHoveredStatAtom,
   hoveredStatAtom,
   dagDisplayedNodeIdsAtom,
+  graphInspectionActionAtom,
+  graphInspectionAtom,
+  requestedPipeInspectionAtom,
 } from '../atoms/dagControls';
 
 export function useSelectedColorField() {
@@ -72,6 +75,18 @@ export function useSelectedDagLayoutDirection() {
 export function useSelectedOperatorsData() {
   const map = useAtomValue(selectedOperatorsDataAtom);
   return useMemo(() => [...map.values()], [map]);
+}
+
+export function useGraphInspection() {
+  return useAtomValue(graphInspectionAtom);
+}
+
+export function useSetGraphInspection() {
+  return useSetAtom(graphInspectionActionAtom);
+}
+
+export function useRequestedPipeInspection() {
+  return useAtomValue(requestedPipeInspectionAtom);
 }
 
 export function useHighlightedNodeIds() {

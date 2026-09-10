@@ -271,6 +271,7 @@ describe('DeepLinkBoundary', () => {
       selection: {
         planId: 'plan-a',
         operatorNodeIds: ['operator-a', 'operator-child', 'operator-unknown'],
+        pipe: { sourcePortId: 'source-port', targetPortId: 'target-port' },
       },
       resources: {
         expandedRowIds: ['worker-a'],
@@ -332,6 +333,7 @@ describe('DeepLinkBoundary', () => {
         selection: {
           planId: 'plan-a',
           operatorNodeIds: ['operator-a', 'operator-child', 'operator-unknown'],
+          pipe: { sourcePortId: 'source-port', targetPortId: 'target-port' },
         },
         dag: {
           nodeColorField: 'duration_s',

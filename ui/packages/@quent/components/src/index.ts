@@ -194,7 +194,7 @@ export {
   formatEdgeFlowLabel,
   formatEdgeTooltip,
   formatOperatorFlowSummary,
-  isSelectedJoinBuildEdge,
+  isSelectedInputEdge,
   normalizeEdgeWidth,
 } from './services/query-plan/flowPresentation';
 export type { DAGData, QueryPlanDataItem, QueryPlanNodeData } from './services/query-plan/types';

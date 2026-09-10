@@ -20,11 +20,19 @@ pub struct Statistics {
     pub custom_attributes: quent_model::attributes::DynamicAttributes,
 }
 
+/// A timestamped, producer-defined observation about an operator.
+#[derive(Debug, Attributes, Deserialize, Serialize)]
+pub struct Observation {
+    pub kind: String,
+    pub custom_attributes: quent_model::attributes::DynamicAttributes,
+}
+
 entity! {
     Operator: ResourceGroup {
         declaration: declaration,
         events: {
             declaration: Declaration,
+            observation: Observation,
             statistics: Statistics,
         },
     }

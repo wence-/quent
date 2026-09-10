@@ -16,6 +16,7 @@ use crate::{OperatorEntity, OperatorEntityMut};
 #[derive(Debug)]
 pub struct Operator {
     inner: EntityEvents<operator::Operator>,
+    observations: Vec<Event<operator::Observation>>,
     active_span: Option<SpanUnixNanoSec>,
 }
 
@@ -23,12 +24,27 @@ impl Operator {
     pub fn try_new(id: Uuid) -> AnalyzerResult<Self> {
         Ok(Self {
             inner: EntityEvents::new(id)?,
+            observations: Vec::new(),
             active_span: None,
         })
     }
 
     pub fn push(&mut self, event: Event<operator::OperatorEvent>) {
-        self.inner.push(event);
+        let Event {
+            id,
+            timestamp,
+            data,
+        } = event;
+        match data {
+            operator::OperatorEvent::Observation(observation) => {
+                let position = self
+                    .observations
+                    .partition_point(|existing| existing.timestamp <= timestamp);
+                self.observations
+                    .insert(position, Event::new(id, timestamp, observation));
+            }
+            data => self.inner.push(Event::new(id, timestamp, data)),
+        }
     }
 }
 
@@ -94,6 +110,21 @@ impl OperatorEntity for Operator {
                 .collect(),
         });
 
+        let observations = self
+            .observations
+            .iter()
+            .map(|event| ui::OperatorObservation {
+                time_s: quent_time::to_secs_relative(event.timestamp, epoch),
+                kind: event.data.kind.clone(),
+                custom_attributes: event
+                    .data
+                    .custom_attributes
+                    .iter()
+                    .map(|DynamicAttribute { key, value }| (key.clone(), value.clone()))
+                    .collect(),
+            })
+            .collect();
+
         ui::Operator {
             id: self.inner.id(),
             plan_id: self.plan_id(),
@@ -104,6 +135,7 @@ impl OperatorEntity for Operator {
                 .map(|decl| decl.instance_name.clone()),
             operator_type_name: d.declaration.as_ref().map(|decl| decl.type_name.clone()),
             custom_attributes,
+            observations,
             statistics,
             active_span: self
                 .active_span()

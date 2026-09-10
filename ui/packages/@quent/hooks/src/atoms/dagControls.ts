@@ -146,7 +146,7 @@ export const selectedColorField = atom<string | null>(null);
 export const nodeColoringAtom = atom<NodeColoring>(null);
 
 /** Field to scale edge widths by */
-export const selectedEdgeWidthFieldAtom = atom<string | null>(null);
+export const selectedEdgeWidthFieldAtom = atom<string | null>('bytes');
 
 /** Computed edge width config (written by QueryPlan, read by VariableWidthEdge) */
 export const edgeWidthConfigAtom = atom<EdgeWidthConfig>(null);

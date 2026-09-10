@@ -30,6 +30,7 @@ import { parseCustomStatistics } from '../lib/queryBundle.utils';
 import { DataText } from '../ui/data-text';
 import { NodeFlowBar } from './NodeFlowBar';
 import { getNodeOpacityClass } from './nodeOpacity';
+import { formatOperatorFlowSummary } from '../services/query-plan/flowPresentation';
 
 export interface QueryPlanNodeData extends Record<string, unknown> {
   label: string;
@@ -89,6 +90,7 @@ export const QueryPlanNode = memo(({ data }: { data: QueryPlanNodeData }) => {
   const operatorId = data.metadata?.rawNode?.id ?? '';
   const isHighlighted = highlightState.ids !== null && highlightState.ids.has(operatorId);
   const statistics = parseCustomStatistics(data.metadata?.rawNode);
+  const flowSummary = formatOperatorFlowSummary(statistics);
   const { quantitySpecs } = data;
   const [nodeLabelField] = useSelectedNodeLabelField();
   const { fieldColor, isDimmed, isSelected, colorField } = useNodeColoring(operatorId, isDark);
@@ -214,6 +216,14 @@ export const QueryPlanNode = memo(({ data }: { data: QueryPlanNodeData }) => {
           }}
         >
           {formattedColorFieldValue}
+        </div>
+      )}
+
+      {flowSummary.length > 0 && (
+        <div className="mt-1 text-center text-[10px] leading-tight text-muted-foreground tabular-nums">
+          {flowSummary.map(line => (
+            <div key={line}>{line}</div>
+          ))}
         </div>
       )}
 

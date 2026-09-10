@@ -145,6 +145,8 @@ export const getPlanDAG = (
         type: 'smoothstep',
         sourcePortId: edge.source,
         targetPortId: edge.target,
+        sourcePortName: sourcePort?.instance_name ?? undefined,
+        targetPortName: targetPort?.instance_name ?? undefined,
         portStats: parsePortStatistics(sourcePort),
         targetPortStats: parsePortStatistics(targetPort),
       });

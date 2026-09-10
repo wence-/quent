@@ -187,6 +187,13 @@ export {
   validateQueryBundle,
 } from './services/query-plan/query-bundle-transformer';
 export { getDefaultPlanId } from './services/query-plan/plan-selection';
+export {
+  formatEdgeFlowLabel,
+  formatEdgeTooltip,
+  formatOperatorFlowSummary,
+  isSelectedJoinBuildEdge,
+  normalizeEdgeWidth,
+} from './services/query-plan/flowPresentation';
 export type { DAGData, QueryPlanDataItem, QueryPlanNodeData } from './services/query-plan/types';
 // DAGNode, DAGEdge, StatValue re-exported via services/query-plan/types (avoid direct @quent/utils re-export here)
 

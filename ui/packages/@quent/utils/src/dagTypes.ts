@@ -84,6 +84,8 @@ export interface DAGEdge {
   type?: 'smoothstep' | 'default' | 'straight';
   sourcePortId?: string;
   targetPortId?: string;
+  sourcePortName?: string;
+  targetPortName?: string;
   portStats?: Array<{ key: string; value: StatValue }>;
   targetPortStats?: Array<{ key: string; value: StatValue }>;
 }

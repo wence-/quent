@@ -131,8 +131,7 @@ export function getSchemaStatNames<TRow>(
   const seen = new Set<string>();
   const names: string[] = [];
   for (const row of rows) {
-    const stats = schema.stats(row);
-    for (const statName of Object.keys(stats)) {
+    for (const [statName] of schema.stats(row)) {
       if (seen.has(statName)) {
         continue;
       }
@@ -162,7 +161,7 @@ export function expandRowsFromSchema<TRow>(
       groups.item?.id ??
       groups.partition?.id ??
       '-';
-    for (const [statisticName, value] of Object.entries(schema.stats(row))) {
+    for (const [statisticName, value] of schema.stats(row)) {
       expanded.push({
         groups,
         itemType,

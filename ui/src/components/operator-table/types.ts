@@ -33,7 +33,7 @@ export interface OperatorTableRow {
   itemType: string;
   itemName: string;
   itemId: string;
-  stats: Record<string, StatValue>;
+  stats: Array<readonly [name: string, value: StatValue]>;
   /** Maps stat key → quantity name (key into QueryBundle.quantity_specs) for stats that have one. */
   statQuantities: Record<string, string>;
 }

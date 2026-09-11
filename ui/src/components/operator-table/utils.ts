@@ -2,9 +2,31 @@
 // SPDX-License-Identifier: Apache-2.0
 
 import type { QueryEntities } from '~quent/types/QueryEntities';
-import type { StatValue } from '@quent/utils';
 import { parseOperatorInformation } from '@quent/components';
 import type { OperatorTableRow } from './types';
+
+export function buildOrderedOperatorStatistics(
+  information: ReturnType<typeof parseOperatorInformation>,
+  duration: number | null
+): Pick<OperatorTableRow, 'stats' | 'statQuantities'> {
+  const stats: OperatorTableRow['stats'] = [
+    ['duration_s', duration !== null ? Number(duration.toFixed(6)) : null],
+  ];
+  const statQuantities: Record<string, string> = {};
+  const occurrences = new Map<string, number>();
+  for (const group of information) {
+    for (const item of group.items) {
+      const occurrence = (occurrences.get(item.key) ?? 0) + 1;
+      occurrences.set(item.key, occurrence);
+      const name = occurrence === 1 ? item.key : `${item.key} (${occurrence})`;
+      stats.push([name, item.value]);
+      if (item.quantity) {
+        statQuantities[name] = item.quantity;
+      }
+    }
+  }
+  return { stats, statQuantities };
+}
 
 /**
  * Flatten a `QueryEntities` graph into one row per operator across the given
@@ -72,18 +94,10 @@ export function buildOperatorRows(
       const parentItemName =
         parentOps.length > 0 ? parentOps.map(p => p.instance_name ?? p.id).join(', ') : '-';
       const duration = op.active_span ? op.active_span.end - op.active_span.start : null;
-      const stats: Record<string, StatValue> = {
-        duration_s: duration !== null ? Number(duration.toFixed(6)) : null,
-      };
-      const statQuantities: Record<string, string> = {};
-      for (const group of parseOperatorInformation(op)) {
-        for (const item of group.items) {
-          stats[item.key] = item.value;
-          if (item.quantity) {
-            statQuantities[item.key] = item.quantity;
-          }
-        }
-      }
+      const { stats, statQuantities } = buildOrderedOperatorStatistics(
+        parseOperatorInformation(op),
+        duration
+      );
       rows.push({
         partitionId,
         partitionLabel,

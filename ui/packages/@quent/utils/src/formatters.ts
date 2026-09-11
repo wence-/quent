@@ -411,6 +411,9 @@ export function inferFieldFormatter(fieldName: string): (value: number | bigint)
     if (fieldName.endsWith('_ns')) {
       return formatDuration(num / 1e6);
     }
+    if (fieldName.endsWith('_unknown_messages')) {
+      return formatSiCount(num, 2);
+    }
     if (isBytesStat(fieldName)) {
       return formatBytes(value, 2);
     }

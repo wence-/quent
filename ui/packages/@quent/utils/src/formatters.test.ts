@@ -488,6 +488,12 @@ describe('inferFieldFormatter', () => {
     expect(fmt(1048576)).toBe('1.00 MiB');
   });
 
+  it('formats unknown-message fields as counts before byte inference', () => {
+    expect(inferFieldFormatter('bytes_unknown_messages')(0)).toBe('0');
+    expect(inferFieldFormatter('bytes_unknown_messages')(1500)).toBe('1.50 k');
+    expect(inferFieldFormatter('largest_known_message_bytes')(1024)).toBe('1.00 KiB');
+  });
+
   it('formats row/batch count fields with SI scaling', () => {
     const fmtRows = inferFieldFormatter('output_rows');
     expect(fmtRows(500)).toBe('500.00 ');

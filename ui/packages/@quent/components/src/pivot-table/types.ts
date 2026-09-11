@@ -128,8 +128,8 @@ export interface PivotedStatTableSchema<TRow> {
    * Optional item type fallback. If omitted, uses group "item_type" id, then "item" id.
    */
   itemType?: (row: TRow) => string;
-  /** Stat map for one logical row; keys become table stat columns. */
-  stats: (row: TRow) => Record<string, StatValue>;
+  /** Ordered statistics for one logical row; names become table stat columns. */
+  stats: (row: TRow) => Iterable<readonly [name: string, value: StatValue]>;
 }
 
 export interface GroupKeyEntry {

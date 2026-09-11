@@ -178,8 +178,10 @@ pub struct Plan {
 }
 
 #[derive(TS, Debug, Serialize)]
-pub struct OperatorStatistic {
-    /// The value of this statistic.
+pub struct InformationItem {
+    /// The producer-defined key of this item.
+    pub key: String,
+    /// The value of this item.
     pub value: Option<DynamicValue>,
     /// The key of the [`QuantitySpec`] in [`QueryBundle::quantity_specs`] used
     /// to display this statistic.
@@ -187,9 +189,17 @@ pub struct OperatorStatistic {
 }
 
 #[derive(TS, Debug, Serialize)]
+pub struct InformationGroup {
+    /// Producer-defined group heading.
+    pub heading: String,
+    /// Producer-defined items in display order.
+    pub items: Vec<InformationItem>,
+}
+
+#[derive(TS, Debug, Serialize)]
 pub struct OperatorStatistics {
-    /// Custom statistics.
-    pub custom_statistics: HashMap<String, OperatorStatistic>,
+    /// Producer-defined information groups in display order.
+    pub information: Vec<InformationGroup>,
 }
 
 #[derive(TS, Debug, Serialize)]
@@ -199,7 +209,7 @@ pub struct OperatorObservation {
     /// Producer-defined observation kind.
     pub kind: String,
     /// Arbitrary producer-defined attributes.
-    pub custom_attributes: HashMap<String, Option<DynamicValue>>,
+    pub custom_attributes: Vec<DynamicAttribute>,
 }
 
 #[derive(TS, Debug, Serialize)]
@@ -238,8 +248,8 @@ pub struct Operator {
 
 #[derive(TS, Debug, Serialize)]
 pub struct PortStatistics {
-    /// Custom statistics
-    pub custom_statistics: HashMap<String, Option<DynamicValue>>,
+    /// Producer-defined information groups in display order.
+    pub information: Vec<InformationGroup>,
 }
 
 #[derive(TS, Debug, Serialize)]

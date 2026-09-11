@@ -23,7 +23,7 @@ function makeOperator(id: string, withStatistics: boolean): Operator {
     instance_name: null,
     operator_type_name: 'Operator',
     custom_attributes: {},
-    statistics: withStatistics ? ({ custom_statistics: {} } as Operator['statistics']) : null,
+    statistics: withStatistics ? { information: [] } : null,
     active_span: null,
   };
 }
@@ -33,7 +33,7 @@ function makePort(id: string, operatorId: string, withStatistics: boolean): Port
     id,
     operator_id: operatorId,
     instance_name: null,
-    statistics: withStatistics ? ({ custom_statistics: {} } as Port['statistics']) : null,
+    statistics: withStatistics ? { information: [] } : null,
   };
 }
 

@@ -22,6 +22,7 @@ use quent_dynamic_attributes::DynamicAttribute;
 use quent_model::{Ref, usage};
 use quent_query_engine_model::{
     engine::{self, EngineImplementationAttributes},
+    information::InformationGroup,
     operator, plan, port, query_group, worker,
 };
 use quent_simulator_instrumentation::SimulatorContext;
@@ -564,11 +565,38 @@ fn emit_operator_statistics(ctx: &SimulatorContext) {
         (PHYS_OUTPUT, "Output"),
     ];
     for (op_id, type_name) in op_stats {
+        let information = if op_id == PHYS_FINAL_AGG {
+            vec![
+                InformationGroup {
+                    heading: "zeta_2".to_string(),
+                    items: vec![
+                        DynamicAttribute::u64("mixedCase", 7),
+                        DynamicAttribute::null("alpha_value"),
+                        DynamicAttribute::string("repeat", "first"),
+                        DynamicAttribute::string("repeat", "second"),
+                    ]
+                    .into(),
+                },
+                InformationGroup {
+                    heading: "Alpha 10".to_string(),
+                    items: vec![
+                        DynamicAttribute::u64("numeric_10", 10),
+                        DynamicAttribute::string("unknown_field", type_name),
+                    ]
+                    .into(),
+                },
+            ]
+        } else {
+            vec![InformationGroup {
+                heading: "Summary".to_string(),
+                items: vec![DynamicAttribute::string("type", type_name)].into(),
+            }]
+        };
         ts!(
             6_100_000_000,
-            op_obs.create(op_id).statistics(operator::Statistics {
-                custom_attributes: vec![DynamicAttribute::string("type", type_name)].into(),
-            })
+            op_obs
+                .create(op_id)
+                .statistics(operator::Statistics { information })
         );
     }
 }
@@ -587,7 +615,13 @@ fn emit_operator_observations(ctx: &SimulatorContext) {
         3_800_000_000,
         operator.observation(operator::Observation {
             kind: "algorithm.choice".to_string(),
-            custom_attributes: vec![DynamicAttribute::string("side", "left")].into(),
+            custom_attributes: vec![
+                DynamicAttribute::string("zChoice", "left"),
+                DynamicAttribute::null("alpha_choice"),
+                DynamicAttribute::u64("repeat", 1),
+                DynamicAttribute::u64("repeat", 2),
+            ]
+            .into(),
         })
     );
 }
@@ -621,7 +655,7 @@ fn emit_port_statistics(ctx: &SimulatorContext) {
         ts!(
             6_100_000_000,
             port_obs.create(port_id).statistics(port::Statistics {
-                custom_attributes: Default::default(),
+                information: Vec::new(),
             })
         );
     }

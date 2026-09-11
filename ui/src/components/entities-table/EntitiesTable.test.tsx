@@ -156,7 +156,7 @@ function DagSelectionControl() {
             nodeId: 'operator-1',
             label: 'Operator One',
             operationType: 'scan',
-            statistics: [],
+            information: [],
             observations: [],
           },
         })

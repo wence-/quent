@@ -305,6 +305,18 @@ impl InMemoryQueryEngineModelBuilder {
             timestamp,
             data,
         } = event;
+        match &data {
+            QueryEngineEvent::Operator(
+                quent_query_engine_model::operator::OperatorEvent::Statistics(statistics),
+            ) => validate_information(&statistics.information)?,
+            QueryEngineEvent::Operator(
+                quent_query_engine_model::operator::OperatorEvent::Observation(observation),
+            ) => validate_reserved_relations(observation.custom_attributes.iter())?,
+            QueryEngineEvent::Port(quent_query_engine_model::port::PortEvent::Statistics(
+                statistics,
+            )) => validate_information(&statistics.information)?,
+            _ => {}
+        }
         match data {
             QueryEngineEvent::Engine(e) => {
                 // One engine instance per model: the imported streams for an
@@ -400,5 +412,91 @@ impl InMemoryQueryEngineModelBuilder {
             operators: self.operators,
             ports: self.ports,
         })
+    }
+}
+
+fn validate_information(
+    information: &[quent_query_engine_model::information::InformationGroup],
+) -> AnalyzerResult<()> {
+    let mut attributes = Vec::new();
+    for group in information {
+        if group.heading.trim().is_empty() {
+            return Err(AnalyzerError::Validation(
+                "information group heading cannot be empty".to_string(),
+            ));
+        }
+        if group.items.is_empty() {
+            return Err(AnalyzerError::Validation(format!(
+                "information group '{}' cannot be empty",
+                group.heading
+            )));
+        }
+        attributes.extend(group.items.iter());
+    }
+    validate_reserved_relations(attributes)
+}
+
+fn validate_reserved_relations<'a>(
+    attributes: impl IntoIterator<Item = &'a quent_dynamic_attributes::DynamicAttribute>,
+) -> AnalyzerResult<()> {
+    let attributes = attributes.into_iter().collect::<Vec<_>>();
+    for key in ["selected_input_port_id", "selected_input_port_role"] {
+        if attributes
+            .iter()
+            .filter(|attribute| attribute.key == key)
+            .count()
+            > 1
+        {
+            return Err(AnalyzerError::Validation(format!(
+                "reserved structural relation '{key}' cannot be repeated"
+            )));
+        }
+    }
+    Ok(())
+}
+
+#[cfg(test)]
+mod tests {
+    use quent_dynamic_attributes::DynamicAttribute;
+    use quent_query_engine_model::information::InformationGroup;
+
+    use super::validate_information;
+
+    #[test]
+    fn rejects_empty_information_groups() {
+        let empty_heading = [InformationGroup {
+            heading: "  ".to_string(),
+            items: vec![DynamicAttribute::u64("value", 1)].into(),
+        }];
+        assert!(validate_information(&empty_heading).is_err());
+
+        let empty_items = [InformationGroup {
+            heading: "Summary".to_string(),
+            items: Vec::new().into(),
+        }];
+        assert!(validate_information(&empty_items).is_err());
+    }
+
+    #[test]
+    fn rejects_repeated_reserved_relations_but_allows_ordinary_keys() {
+        let repeated_relation = [InformationGroup {
+            heading: "Join".to_string(),
+            items: vec![
+                DynamicAttribute::string("selected_input_port_id", "first"),
+                DynamicAttribute::string("selected_input_port_id", "second"),
+            ]
+            .into(),
+        }];
+        assert!(validate_information(&repeated_relation).is_err());
+
+        let repeated_ordinary = [InformationGroup {
+            heading: "Evidence".to_string(),
+            items: vec![
+                DynamicAttribute::u64("candidate", 1),
+                DynamicAttribute::u64("candidate", 2),
+            ]
+            .into(),
+        }];
+        assert!(validate_information(&repeated_ordinary).is_ok());
     }
 }

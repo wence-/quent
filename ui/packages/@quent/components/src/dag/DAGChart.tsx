@@ -62,9 +62,9 @@ import {
 import { shouldDimEdgeFromInteraction } from './edgeOpacity';
 import { getEdgeInteractionWidth, isEdgeInspectionKey } from './edgeInteraction';
 import {
-  parseCustomStatistics,
+  parseOperatorInformation,
   parseOperatorObservations,
-  parsePortStatistics,
+  parsePortInformation,
 } from '../lib/queryBundle.utils';
 import {
   continuousColor,
@@ -173,7 +173,7 @@ const VariableWidthEdge = ({
   const isBuildEdge =
     renderedEdge !== undefined &&
     selectedOperatorsData.some(operator =>
-      isSelectedInputEdge(renderedEdge, operator.nodeId, operator.statistics)
+      isSelectedInputEdge(renderedEdge, operator.nodeId, operator.information)
     );
   if (isBuildEdge) {
     edgeColor = SELECTED_INPUT_EDGE_COLOR;
@@ -383,18 +383,18 @@ function selectedOperatorDataFromFlowNode(
     nodeId: node.id,
     label: node.data.label,
     operationType: node.data.operationType,
-    statistics: parseCustomStatistics(node.data.metadata?.rawNode),
+    information: parseOperatorInformation(node.data.metadata?.rawNode),
     observations: parseOperatorObservations(node.data.metadata?.rawNode),
     ports: node.data.metadata?.ports?.map(port => ({
       id: port.id,
       ...(port.instance_name ? { name: port.instance_name } : {}),
-      statistics: parsePortStatistics(port),
+      information: parsePortInformation(port),
     })),
     relatedOperators: node.data.metadata?.relatedOperators?.map(operator => ({
       nodeId: operator.id,
       label: operator.instance_name ?? operator.operator_type_name ?? 'Operator',
       operationType: operator.operator_type_name?.toLowerCase() ?? 'operator',
-      statistics: parseCustomStatistics(operator),
+      information: parseOperatorInformation(operator),
       observations: parseOperatorObservations(operator),
     })),
   };
@@ -507,11 +507,13 @@ const FlowLayout = ({
     }
     const result: Record<string, QuantitySpec> = {};
     for (const node of data.nodes) {
-      for (const stat of parseCustomStatistics(node.metadata?.rawNode)) {
-        if (stat.quantity && !(stat.key in result)) {
-          const spec = data.quantitySpecs[stat.quantity];
-          if (spec) {
-            result[stat.key] = spec;
+      for (const group of parseOperatorInformation(node.metadata?.rawNode)) {
+        for (const stat of group.items) {
+          if (stat.quantity && !(stat.key in result)) {
+            const spec = data.quantitySpecs[stat.quantity];
+            if (spec) {
+              result[stat.key] = spec;
+            }
           }
         }
       }

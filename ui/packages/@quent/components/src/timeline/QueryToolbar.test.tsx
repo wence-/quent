@@ -26,7 +26,7 @@ function SeedOperatorFilter() {
         nodeId: 'operator-1',
         label: 'Scan',
         operationType: 'logical',
-        statistics: [],
+        information: [],
       },
     });
   }, [updateOperatorSelection]);
@@ -48,7 +48,7 @@ function ToolbarHarness() {
         nodeId: 'parent',
         label: 'Parent operator',
         operationType: 'logical',
-        statistics: [],
+        information: [],
       },
     });
   }, [updateOperatorSelection]);
@@ -84,7 +84,7 @@ function MultiOperatorToolbarHarness() {
           nodeId: id,
           label: `Operator ${number}`,
           operationType: 'physical',
-          statistics: [],
+          information: [],
         },
       });
     }
@@ -113,7 +113,7 @@ function TwoOperatorToolbarHarness() {
         nodeId: 'scan',
         label: 'Scan',
         operationType: 'scan',
-        statistics: [],
+        information: [],
       },
     });
     updateOperatorSelection({
@@ -125,7 +125,7 @@ function TwoOperatorToolbarHarness() {
         nodeId: 'join',
         label: 'Join',
         operationType: 'join',
-        statistics: [],
+        information: [],
       },
     });
   }, [updateOperatorSelection]);

@@ -9,6 +9,7 @@ import type {
   NodeColoring,
   EdgeWidthConfig,
   EdgeColoring,
+  InspectedInformationGroup,
   PaletteTheme,
 } from '@quent/utils';
 import {
@@ -32,7 +33,7 @@ type ComputeEdgeColoringFn = (
   field: string | null,
   theme: PaletteTheme
 ) => EdgeColoring;
-type ParseCustomStatisticsFn = (rawNode: unknown) => Array<{ key: string }>;
+type ParseOperatorInformationFn = (rawNode: unknown) => InspectedInformationGroup[];
 
 export function useDagNodeColoring(
   nodes: DAGNode[],
@@ -85,19 +86,31 @@ export function useDagEdgeColoring(
 
 export function useOperatorStatFields(
   nodes: DAGNode[],
-  parseCustomStatistics: ParseCustomStatisticsFn
+  parseOperatorInformation: ParseOperatorInformationFn
 ): string[] {
   return useMemo(
     () => [
-      ...new Set(nodes.flatMap(n => parseCustomStatistics(n.metadata?.rawNode).map(s => s.key))),
+      ...new Set(
+        nodes.flatMap(n =>
+          parseOperatorInformation(n.metadata?.rawNode).flatMap(group =>
+            group.items.map(item => item.key)
+          )
+        )
+      ),
     ],
-    [nodes, parseCustomStatistics]
+    [nodes, parseOperatorInformation]
   );
 }
 
 export function usePortStatFields(edges: DAGEdge[]): string[] {
   return useMemo(
-    () => [...new Set(edges.flatMap(e => (e.portStats ?? []).map(s => s.key)))],
+    () => [
+      ...new Set(
+        edges.flatMap(e =>
+          (e.portInformation ?? []).flatMap(group => group.items.map(item => item.key))
+        )
+      ),
+    ],
     [edges]
   );
 }

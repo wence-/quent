@@ -64,19 +64,19 @@ function SelectionControls() {
               nodeId: 'parent',
               label: 'parent',
               operationType: 'test',
-              statistics: [],
+              information: [],
               relatedOperators: [
                 {
                   nodeId: 'left',
                   label: 'left',
                   operationType: 'test',
-                  statistics: [],
+                  information: [],
                 },
                 {
                   nodeId: 'right',
                   label: 'right',
                   operationType: 'test',
-                  statistics: [],
+                  information: [],
                 },
               ],
             },
@@ -112,7 +112,7 @@ describe('OperatorGanttChart', () => {
         endMs: 1,
         rowIndex: 0,
         planId: 'plan',
-        statistics: [],
+        information: [],
       },
     ];
 

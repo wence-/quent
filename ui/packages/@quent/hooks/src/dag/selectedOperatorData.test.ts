@@ -9,14 +9,14 @@ const scan: SelectedOperatorGroupData = {
   nodeId: 'scan',
   label: 'Scan',
   operationType: 'scan',
-  statistics: [],
+  information: [],
 };
 
 const join: SelectedOperatorGroupData = {
   nodeId: 'join',
   label: 'Join',
   operationType: 'join',
-  statistics: [],
+  information: [],
 };
 
 describe('selected operator data', () => {

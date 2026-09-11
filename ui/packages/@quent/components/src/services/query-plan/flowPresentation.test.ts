@@ -19,12 +19,19 @@ const EDGE: DAGEdge = {
   targetPortId: 'target-port',
   sourcePortName: 'output_0',
   targetPortName: 'input_1',
-  portStats: [
-    { key: 'rows', value: 1500 },
-    { key: 'bytes', value: 1048576n },
-    { key: 'bytes_unknown_messages', value: 2 },
+  portInformation: [
+    {
+      heading: 'Volume',
+      items: [
+        { key: 'rows', value: 1500 },
+        { key: 'bytes', value: 1048576n },
+        { key: 'bytes_unknown_messages', value: 2 },
+      ],
+    },
   ],
-  targetPortStats: [{ key: 'rows', value: 1499 }],
+  targetPortInformation: [
+    { heading: 'Volume', items: [{ key: 'rows', value: 1499 }] },
+  ],
 };
 
 describe('flow presentation', () => {
@@ -33,14 +40,20 @@ describe('flow presentation', () => {
   });
 
   it('keeps missing statistics distinct from observed zero', () => {
-    expect(formatEdgeFlowLabel({ ...EDGE, portStats: [] })).toBeNull();
-    expect(formatEdgeFlowLabel({ ...EDGE, portStats: [{ key: 'bytes', value: 0 }] })).toBe('0 B');
+    expect(formatEdgeFlowLabel({ ...EDGE, portInformation: [] })).toBeNull();
+    expect(
+      formatEdgeFlowLabel({
+        ...EDGE,
+        portInformation: [{ heading: 'Volume', items: [{ key: 'bytes', value: 0 }] }],
+      })
+    ).toBe('0 B');
   });
 
   it('shows both structural endpoints in the edge tooltip', () => {
     const tooltip = formatEdgeTooltip(EDGE);
     expect(tooltip).toContain('output_0 (source-port)');
     expect(tooltip).toContain('input_1 (target-port)');
+    expect(tooltip).toContain('Volume');
     expect(tooltip).toContain('rows: 1.5k');
     expect(tooltip).toContain('bytes_unknown_messages: 2');
   });
@@ -54,20 +67,32 @@ describe('flow presentation', () => {
 
   it('matches the selected structural Join input', () => {
     expect(
-      isSelectedInputEdge(EDGE, 'join', [{ key: 'selected_input_port_id', value: 'target-port' }])
+      isSelectedInputEdge(EDGE, 'join', [
+        {
+          heading: 'Join',
+          items: [{ key: 'selected_input_port_id', value: 'target-port' }],
+        },
+      ])
     ).toBe(true);
-    expect(isSelectedInputEdge(EDGE, 'join', [{ key: 'join_selected_input', value: 1 }])).toBe(
-      false
-    );
+    expect(
+      isSelectedInputEdge(EDGE, 'join', [
+        { heading: 'Join', items: [{ key: 'join_build_input_index', value: 1 }] },
+      ])
+    ).toBe(false);
     expect(isSelectedInputEdge(EDGE, 'other', [])).toBe(false);
   });
 
   it('formats canonical operator aggregates without inventing absent directions', () => {
     expect(
       formatOperatorFlowSummary([
-        { key: 'output_rows', value: 20 },
-        { key: 'output_bytes', value: 2048 },
-        { key: 'output_rows_unknown_messages', value: 1 },
+        {
+          heading: 'Flow',
+          items: [
+            { key: 'output_rows', value: 20 },
+            { key: 'output_bytes', value: 2048 },
+            { key: 'output_rows_unknown_messages', value: 1 },
+          ],
+        },
       ])
     ).toEqual(['Out 20 +? · 2.00 KiB']);
   });

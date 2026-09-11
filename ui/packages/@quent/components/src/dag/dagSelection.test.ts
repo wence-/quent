@@ -18,8 +18,8 @@ const edges = [
     targetPortId: 'target-port-0',
     sourcePortName: 'output_0',
     targetPortName: 'input_0',
-    portStats: [{ key: 'rows', value: 10 }],
-    targetPortStats: [{ key: 'rows', value: 10 }],
+    portInformation: [{ heading: 'Volume', items: [{ key: 'rows', value: 10 }] }],
+    targetPortInformation: [{ heading: 'Volume', items: [{ key: 'rows', value: 10 }] }],
   },
   {
     id: 'edge-1',
@@ -27,8 +27,8 @@ const edges = [
     target: 'target',
     sourcePortId: 'source-port-1',
     targetPortId: 'target-port-1',
-    portStats: [{ key: 'rows', value: 20 }],
-    targetPortStats: [{ key: 'rows', value: 19 }],
+    portInformation: [{ heading: 'Volume', items: [{ key: 'rows', value: 20 }] }],
+    targetPortInformation: [{ heading: 'Volume', items: [{ key: 'rows', value: 19 }] }],
   },
 ];
 
@@ -44,7 +44,7 @@ describe('pipe inspection', () => {
         port: {
           id: 'source-port-0',
           name: 'output_0',
-          statistics: [{ key: 'rows', value: 10 }],
+          information: [{ heading: 'Volume', items: [{ key: 'rows', value: 10 }] }],
         },
       },
       target: {
@@ -53,7 +53,7 @@ describe('pipe inspection', () => {
         port: {
           id: 'target-port-0',
           name: 'input_0',
-          statistics: [{ key: 'rows', value: 10 }],
+          information: [{ heading: 'Volume', items: [{ key: 'rows', value: 10 }] }],
         },
       },
     });
@@ -64,8 +64,12 @@ describe('pipe inspection', () => {
       sourcePortId: 'source-port-1',
       targetPortId: 'target-port-1',
     });
-    expect(inspection?.source.port.statistics).toEqual([{ key: 'rows', value: 20 }]);
-    expect(inspection?.target.port.statistics).toEqual([{ key: 'rows', value: 19 }]);
+    expect(inspection?.source.port.information).toEqual([
+      { heading: 'Volume', items: [{ key: 'rows', value: 20 }] },
+    ]);
+    expect(inspection?.target.port.information).toEqual([
+      { heading: 'Volume', items: [{ key: 'rows', value: 19 }] },
+    ]);
   });
 
   it('does not guess when an endpoint or requested edge is absent', () => {

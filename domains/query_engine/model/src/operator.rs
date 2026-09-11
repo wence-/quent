@@ -17,7 +17,7 @@ pub struct Declaration {
 
 #[derive(Debug, Attributes, Deserialize, Serialize)]
 pub struct Statistics {
-    pub custom_attributes: quent_model::attributes::DynamicAttributes,
+    pub information: Vec<super::information::InformationGroup>,
 }
 
 /// A timestamped, producer-defined observation about an operator.

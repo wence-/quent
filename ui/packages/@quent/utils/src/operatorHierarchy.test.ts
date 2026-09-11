@@ -78,19 +78,19 @@ describe('operator hierarchy', () => {
           nodeId: 'logical',
           label: 'Logical',
           operationType: 'operator',
-          statistics: [],
+          information: [],
           relatedOperators: [
             {
               nodeId: 'left',
               label: 'Left',
               operationType: 'operator',
-              statistics: [],
+              information: [],
             },
             {
               nodeId: 'right',
               label: 'Right',
               operationType: 'operator',
-              statistics: [],
+              information: [],
             },
           ],
         },

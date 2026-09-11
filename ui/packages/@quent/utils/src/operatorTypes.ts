@@ -1,7 +1,7 @@
 // SPDX-FileCopyrightText: Copyright (c) 2026, NVIDIA CORPORATION & AFFILIATES. All rights reserved.
 // SPDX-License-Identifier: Apache-2.0
 
-import type { StatValue } from './dagTypes';
+import type { InspectedInformationGroup, StatValue } from './dagTypes';
 
 export interface OperatorSelection {
   readonly label: string;
@@ -20,7 +20,7 @@ export interface SelectedOperatorData {
   nodeId: string;
   label: string;
   operationType: string;
-  statistics: Array<{ key: string; value: StatValue; quantity?: string }>;
+  information: InspectedInformationGroup[];
   observations?: SelectedOperatorObservation[];
   ports?: SelectedOperatorPortData[];
 }
@@ -34,7 +34,7 @@ export interface SelectedOperatorObservation {
 export interface SelectedOperatorPortData {
   id: string;
   name?: string;
-  statistics: Array<{ key: string; value: StatValue }>;
+  information: InspectedInformationGroup[];
 }
 
 export interface SelectedOperatorGroupData extends SelectedOperatorData {
@@ -65,3 +65,22 @@ export interface PipeInspection extends PipeInspectionKey {
 }
 
 export type InspectedGraphItem = OperatorInspection | PipeInspection;
+
+export function informationItems(
+  groups: readonly InspectedInformationGroup[]
+): InspectedInformationGroup['items'] {
+  return groups.flatMap(group => group.items);
+}
+
+export function findInformationItem(
+  groups: readonly InspectedInformationGroup[],
+  key: string
+): InspectedInformationGroup['items'][number] | undefined {
+  for (const group of groups) {
+    const item = group.items.find(candidate => candidate.key === key);
+    if (item) {
+      return item;
+    }
+  }
+  return undefined;
+}

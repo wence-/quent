@@ -12,24 +12,42 @@ import {
 
 // ---- Helpers ---------------------------------------------------------------
 
-/** Build a DAGNode whose rawNode carries the given custom_statistics map. */
+/** Build a DAGNode whose rawNode carries the given information items. */
 function makeNode(id: string, stats: Record<string, unknown> = {}): DAGNode {
-  const customStatistics = Object.fromEntries(
-    Object.entries(stats).map(([key, value]) => [key, { value, quantity: null }])
-  );
   return {
     id,
     label: id,
     type: 'operator',
     metadata: {
-      rawNode: { statistics: { custom_statistics: customStatistics } },
+      rawNode: {
+        statistics: {
+          information: [
+            {
+              heading: 'Telemetry',
+              items: Object.entries(stats).map(([key, value]) => ({
+                key,
+                value,
+                quantity: null,
+              })),
+            },
+          ],
+        },
+      },
     },
   };
 }
 
-/** Build a DAGEdge with optional portStats. */
-function makeEdge(id: string, portStats: DAGEdge['portStats'] = []): DAGEdge {
-  return { id, source: 's', target: 't', portStats };
+/** Build a DAGEdge with optional port information. */
+function makeEdge(
+  id: string,
+  items: NonNullable<DAGEdge['portInformation']>[number]['items'] = []
+): DAGEdge {
+  return {
+    id,
+    source: 's',
+    target: 't',
+    portInformation: [{ heading: 'Telemetry', items }],
+  };
 }
 
 function tagged(variant: string, value: unknown) {

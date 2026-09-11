@@ -3,7 +3,7 @@
 
 import type { QueryEntities } from '~quent/types/QueryEntities';
 import type { StatValue } from '@quent/utils';
-import { parseCustomStatistics } from '@quent/components';
+import { parseOperatorInformation } from '@quent/components';
 import type { OperatorTableRow } from './types';
 
 /**
@@ -76,10 +76,12 @@ export function buildOperatorRows(
         duration_s: duration !== null ? Number(duration.toFixed(6)) : null,
       };
       const statQuantities: Record<string, string> = {};
-      for (const stat of parseCustomStatistics(op)) {
-        stats[stat.key] = stat.value;
-        if (stat.quantity) {
-          statQuantities[stat.key] = stat.quantity;
+      for (const group of parseOperatorInformation(op)) {
+        for (const item of group.items) {
+          stats[item.key] = item.value;
+          if (item.quantity) {
+            statQuantities[item.key] = item.quantity;
+          }
         }
       }
       rows.push({

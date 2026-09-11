@@ -4,7 +4,7 @@
 import type { DAGNode, DAGEdge, QueryPlanDataItem } from './types';
 import type { QueryBundle, EntityRef } from '@quent/utils';
 import { buildRelatedOperatorIdsById, Operator, Port, Plan, PlanTree } from '@quent/utils';
-import { parsePortStatistics } from '../../lib/queryBundle.utils';
+import { parsePortInformation } from '../../lib/queryBundle.utils';
 
 interface PlanTreeNode extends PlanTree {
   query?: string | null;
@@ -151,8 +151,8 @@ export const getPlanDAG = (
         targetPortId: edge.target,
         sourcePortName: sourcePort?.instance_name ?? undefined,
         targetPortName: targetPort?.instance_name ?? undefined,
-        portStats: parsePortStatistics(sourcePort),
-        targetPortStats: parsePortStatistics(targetPort),
+        portInformation: parsePortInformation(sourcePort),
+        targetPortInformation: parsePortInformation(targetPort),
       });
     }
   });

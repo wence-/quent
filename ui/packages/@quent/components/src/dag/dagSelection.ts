@@ -10,9 +10,9 @@ import {
   type PipeInspectionKey,
 } from '@quent/utils';
 import {
-  parseCustomStatistics,
+  parseOperatorInformation,
   parseOperatorObservations,
-  parsePortStatistics,
+  parsePortInformation,
 } from '../lib/queryBundle.utils';
 import type { QueryPlanNodeData } from '../query-plan/QueryPlanNode';
 
@@ -43,7 +43,7 @@ export function inspectPipe(nodes: readonly DAGNode[], edge: DAGEdge): PipeInspe
       port: {
         id: edge.sourcePortId,
         ...(edge.sourcePortName ? { name: edge.sourcePortName } : {}),
-        statistics: edge.portStats ?? [],
+        information: edge.portInformation ?? [],
       },
     },
     target: {
@@ -52,7 +52,7 @@ export function inspectPipe(nodes: readonly DAGNode[], edge: DAGEdge): PipeInspe
       port: {
         id: edge.targetPortId,
         ...(edge.targetPortName ? { name: edge.targetPortName } : {}),
-        statistics: edge.targetPortStats ?? [],
+        information: edge.targetPortInformation ?? [],
       },
     },
   };
@@ -86,18 +86,18 @@ function inspectNode(node: DAGNode): InspectedNodeData {
     nodeId: node.id,
     label: node.label,
     operationType: node.type,
-    statistics: parseCustomStatistics(metadata?.rawNode),
+    information: parseOperatorInformation(metadata?.rawNode),
     observations: parseOperatorObservations(metadata?.rawNode),
     ports: metadata?.ports?.map(port => ({
       id: port.id,
       ...(port.instance_name ? { name: port.instance_name } : {}),
-      statistics: parsePortStatistics(port),
+      information: parsePortInformation(port),
     })),
     relatedOperators: metadata?.relatedOperators?.map(operator => ({
       nodeId: operator.id,
       label: operator.instance_name ?? operator.operator_type_name ?? 'Operator',
       operationType: operator.operator_type_name?.toLowerCase() ?? 'operator',
-      statistics: parseCustomStatistics(operator),
+      information: parseOperatorInformation(operator),
       observations: parseOperatorObservations(operator),
     })),
   };

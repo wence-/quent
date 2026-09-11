@@ -63,6 +63,17 @@ export type DagLayoutDirection = (typeof DAG_LAYOUT_DIRECTION)[keyof typeof DAG_
 
 export type StatValue = DynamicValue | null;
 
+export interface InspectedInformationItem {
+  key: string;
+  value: StatValue;
+  quantity?: string;
+}
+
+export interface InspectedInformationGroup {
+  heading: string;
+  items: InspectedInformationItem[];
+}
+
 export interface DAGNode {
   id: string;
   label: string;
@@ -86,6 +97,6 @@ export interface DAGEdge {
   targetPortId?: string;
   sourcePortName?: string;
   targetPortName?: string;
-  portStats?: Array<{ key: string; value: StatValue }>;
-  targetPortStats?: Array<{ key: string; value: StatValue }>;
+  portInformation?: InspectedInformationGroup[];
+  targetPortInformation?: InspectedInformationGroup[];
 }

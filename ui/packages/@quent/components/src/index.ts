@@ -151,9 +151,9 @@ export type { EChartsOption } from './lib/echarts';
 export {
   entityRefToEntitiesKey,
   ENTITY_REF_TO_ENTITIES_KEY,
-  parseCustomStatistics,
+  parseOperatorInformation,
   parseOperatorObservations,
-  parsePortStatistics,
+  parsePortInformation,
 } from './lib/queryBundle.utils';
 export { getIconForType, collectResourceTypesFromTree } from './lib/resource.utils';
 export {

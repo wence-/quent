@@ -14,6 +14,7 @@ import {
   BLACK,
   NODE_LABEL_FIELD,
   DAG_LAYOUT_DIRECTION,
+  findInformationItem,
   type Operator,
   type Port,
   type DagLayoutDirection,
@@ -27,7 +28,7 @@ import {
   useSetHighlightedNodeIds,
 } from '@quent/hooks';
 import { formatStatWithQuantity, type QuantitySpec } from '@quent/utils';
-import { parseCustomStatistics } from '../lib/queryBundle.utils';
+import { parseOperatorInformation } from '../lib/queryBundle.utils';
 import { DataText } from '../ui/data-text';
 import { NodeFlowBar } from './NodeFlowBar';
 import { getNodeOpacityClass } from './nodeOpacity';
@@ -91,8 +92,8 @@ export const QueryPlanNode = memo(({ data }: { data: QueryPlanNodeData }) => {
   const isDark = data.isDark ?? false;
   const operatorId = data.metadata?.rawNode?.id ?? '';
   const isHighlighted = highlightState.ids !== null && highlightState.ids.has(operatorId);
-  const statistics = parseCustomStatistics(data.metadata?.rawNode);
-  const flowSummary = formatOperatorFlowSummary(statistics);
+  const information = parseOperatorInformation(data.metadata?.rawNode);
+  const flowSummary = formatOperatorFlowSummary(information);
   const { quantitySpecs } = data;
   const [nodeLabelField] = useSelectedNodeLabelField();
   const { fieldColor, isDimmed, isSelected, colorField } = useNodeColoring(operatorId, isDark);
@@ -108,7 +109,7 @@ export const QueryPlanNode = memo(({ data }: { data: QueryPlanNodeData }) => {
     return data.label;
   }, [nodeLabelField, data]);
 
-  const colorFieldStat = colorField ? statistics.find(s => s.key === colorField) : null;
+  const colorFieldStat = colorField ? findInformationItem(information, colorField) : null;
   const colorFieldValue = colorFieldStat?.value ?? null;
   const formattedColorFieldValue =
     colorFieldValue === null

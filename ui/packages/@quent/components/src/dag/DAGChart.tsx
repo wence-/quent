@@ -58,9 +58,9 @@ import { inspectPipe, resolveInspectedNodeSelections, resolvePipeInspection } fr
 import { shouldDimEdgeFromInteraction } from './edgeOpacity';
 import { getEdgeInteractionWidth, isEdgeInspectionKey } from './edgeInteraction';
 import {
-  parseCustomStatistics,
+  parseOperatorInformation,
   parseOperatorObservations,
-  parsePortStatistics,
+  parsePortInformation,
 } from '../lib/queryBundle.utils';
 import {
   continuousColor,
@@ -167,7 +167,7 @@ const VariableWidthEdge = ({
   const renderedEdge = (data as { edge?: DAGData['edges'][number] })?.edge;
   const isBuildEdge =
     renderedEdge !== undefined &&
-    isSelectedInputEdge(renderedEdge, selectedNodeData?.nodeId, selectedNodeData?.statistics);
+    isSelectedInputEdge(renderedEdge, selectedNodeData?.nodeId, selectedNodeData?.information);
   if (isBuildEdge) {
     edgeColor = SELECTED_INPUT_EDGE_COLOR;
     strokeWidth = Math.max(strokeWidth, EDGE_STROKE_WIDTH_MIN + 2);
@@ -458,11 +458,13 @@ const FlowLayout = ({
     }
     const result: Record<string, QuantitySpec> = {};
     for (const node of data.nodes) {
-      for (const stat of parseCustomStatistics(node.metadata?.rawNode)) {
-        if (stat.quantity && !(stat.key in result)) {
-          const spec = data.quantitySpecs[stat.quantity];
-          if (spec) {
-            result[stat.key] = spec;
+      for (const group of parseOperatorInformation(node.metadata?.rawNode)) {
+        for (const stat of group.items) {
+          if (stat.quantity && !(stat.key in result)) {
+            const spec = data.quantitySpecs[stat.quantity];
+            if (spec) {
+              result[stat.key] = spec;
+            }
           }
         }
       }
@@ -562,18 +564,18 @@ const FlowLayout = ({
             nodeId: node.id,
             label: node.data.label,
             operationType: node.data.operationType,
-            statistics: parseCustomStatistics(node.data.metadata?.rawNode),
+            information: parseOperatorInformation(node.data.metadata?.rawNode),
             observations: parseOperatorObservations(node.data.metadata?.rawNode),
             ports: node.data.metadata?.ports?.map(port => ({
               id: port.id,
               ...(port.instance_name ? { name: port.instance_name } : {}),
-              statistics: parsePortStatistics(port),
+              information: parsePortInformation(port),
             })),
             relatedOperators: node.data.metadata?.relatedOperators?.map(operator => ({
               nodeId: operator.id,
               label: operator.instance_name ?? operator.operator_type_name ?? 'Operator',
               operationType: operator.operator_type_name?.toLowerCase() ?? 'operator',
-              statistics: parseCustomStatistics(operator),
+              information: parseOperatorInformation(operator),
               observations: parseOperatorObservations(operator),
             })),
           },

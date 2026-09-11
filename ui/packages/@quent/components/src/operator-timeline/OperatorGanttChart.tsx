@@ -186,7 +186,7 @@ export function OperatorGanttChart({
               nodeId: op.operatorId,
               label: op.label,
               operationType: op.typeName,
-              statistics: op.statistics,
+              information: op.information,
               observations: op.observations,
             },
           });

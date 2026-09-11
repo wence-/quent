@@ -14,7 +14,7 @@ const scanData = {
   nodeId: 'scan',
   label: 'Scan',
   operationType: 'scan',
-  statistics: [],
+  information: [],
   observations: [],
 };
 
@@ -22,7 +22,7 @@ const joinData = {
   nodeId: 'join',
   label: 'Join',
   operationType: 'join',
-  statistics: [],
+  information: [],
   observations: [],
 };
 
@@ -220,12 +220,12 @@ describe('operator selection actions', () => {
       source: {
         operatorId: 'scan',
         operatorLabel: 'Scan',
-        port: { id: 'source-port', statistics: [] },
+        port: { id: 'source-port', information: [] },
       },
       target: {
         operatorId: 'join',
         operatorLabel: 'Join',
-        port: { id: 'target-port', statistics: [] },
+        port: { id: 'target-port', information: [] },
       },
     });
     store.set(operatorSelectionActionAtom, {

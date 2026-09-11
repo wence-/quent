@@ -75,6 +75,8 @@ export type {
   NodeLabelField,
   DagLayoutDirection,
   StatValue,
+  InspectedInformationItem,
+  InspectedInformationGroup,
   DAGNode,
   DAGEdge,
 } from './dagTypes';
@@ -94,6 +96,7 @@ export type {
   PipeInspection,
   InspectedGraphItem,
 } from './operatorTypes';
+export { findInformationItem, informationItems } from './operatorTypes';
 export {
   buildRelatedOperatorIdsById,
   getOperatorDisplayLabel,

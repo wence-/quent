@@ -95,17 +95,20 @@ impl OperatorEntity for Operator {
             .unwrap_or_default();
 
         let statistics = d.statistics.as_ref().map(|s| ui::OperatorStatistics {
-            custom_statistics: s
-                .custom_attributes
+            information: s
+                .information
                 .iter()
-                .map(|DynamicAttribute { key, value }| {
-                    (
-                        key.clone(),
-                        ui::OperatorStatistic {
+                .map(|group| ui::InformationGroup {
+                    heading: group.heading.clone(),
+                    items: group
+                        .items
+                        .iter()
+                        .map(|DynamicAttribute { key, value }| ui::InformationItem {
+                            key: key.clone(),
                             value: value.clone(),
                             quantity: None,
-                        },
-                    )
+                        })
+                        .collect(),
                 })
                 .collect(),
         });
@@ -116,12 +119,7 @@ impl OperatorEntity for Operator {
             .map(|event| ui::OperatorObservation {
                 time_s: quent_time::to_secs_relative(event.timestamp, epoch),
                 kind: event.data.kind.clone(),
-                custom_attributes: event
-                    .data
-                    .custom_attributes
-                    .iter()
-                    .map(|DynamicAttribute { key, value }| (key.clone(), value.clone()))
-                    .collect(),
+                custom_attributes: event.data.custom_attributes.0.clone(),
             })
             .collect();
 

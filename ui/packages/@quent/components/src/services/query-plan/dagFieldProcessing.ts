@@ -2,8 +2,13 @@
 // SPDX-License-Identifier: Apache-2.0
 
 import type { DAGNode, DAGEdge, NodeColoring, EdgeWidthConfig, EdgeColoring } from './types';
-import { parseCustomStatistics } from '../../lib/queryBundle.utils';
-import { getActivePalette, isNumericValue, type PaletteTheme } from '@quent/utils';
+import { parseOperatorInformation } from '../../lib/queryBundle.utils';
+import {
+  findInformationItem,
+  getActivePalette,
+  isNumericValue,
+  type PaletteTheme,
+} from '@quent/utils';
 
 export function computeNodeColoring(
   nodes: DAGNode[],
@@ -15,7 +20,7 @@ export function computeNodeColoring(
   }
 
   const entries = nodes.flatMap(node => {
-    const stat = parseCustomStatistics(node.metadata?.rawNode).find(s => s.key === field);
+    const stat = findInformationItem(parseOperatorInformation(node.metadata?.rawNode), field);
     if (stat?.value == null) {
       return [];
     }
@@ -56,7 +61,7 @@ export function computeEdgeColoring(
   }
 
   const entries = edges.flatMap(edge => {
-    const stat = (edge.portStats ?? []).find(s => s.key === field);
+    const stat = findInformationItem(edge.portInformation ?? [], field);
     if (stat?.value == null) {
       return [];
     }
@@ -94,7 +99,7 @@ export function computeEdgeWidthConfig(edges: DAGEdge[], field: string | null): 
   }
 
   const entries = edges.flatMap(edge => {
-    const stat = (edge.portStats ?? []).find(s => s.key === field);
+    const stat = findInformationItem(edge.portInformation ?? [], field);
     if (stat?.value == null || !isNumericValue(stat.value)) {
       return [];
     }

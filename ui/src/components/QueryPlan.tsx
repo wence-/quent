@@ -31,7 +31,7 @@ import {
   computeNodeColoring,
   computeEdgeWidthConfig,
   computeEdgeColoring,
-  parseCustomStatistics,
+  parseOperatorInformation,
 } from '@quent/components';
 import { DataText } from '@quent/components';
 import { useTheme, THEME_DARK } from '@/contexts/ThemeContext';
@@ -90,7 +90,7 @@ export function QueryPlan({ queryId, engineId }: { queryId: string; engineId: st
   useDagNodeColoring(dagData.nodes, computeNodeColoring, isDark);
   useDagEdgeWidthConfig(dagData.edges, computeEdgeWidthConfig);
   useDagEdgeColoring(dagData.edges, computeEdgeColoring, isDark);
-  const operatorStatFields = useOperatorStatFields(dagData.nodes, parseCustomStatistics);
+  const operatorStatFields = useOperatorStatFields(dagData.nodes, parseOperatorInformation);
   const portStatFields = usePortStatFields(dagData.edges);
 
   const handlePlanSelect = (item: QueryPlanDataItem | undefined) => {

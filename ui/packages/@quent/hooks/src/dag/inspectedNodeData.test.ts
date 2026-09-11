@@ -9,14 +9,14 @@ const scan: InspectedNodeData = {
   nodeId: 'scan',
   label: 'Scan',
   operationType: 'scan',
-  statistics: [],
+  information: [],
 };
 
 const join: InspectedNodeData = {
   nodeId: 'join',
   label: 'Join',
   operationType: 'join',
-  statistics: [],
+  information: [],
 };
 
 describe('inspected node data', () => {

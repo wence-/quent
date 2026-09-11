@@ -392,7 +392,7 @@ describe('DAGNodeInfoPanel matrix under tier selection', () => {
     nodeId: 'op-1',
     label: 'Op 1',
     operationType: 'scan',
-    statistics: [],
+    information: [],
     observations: [],
   };
 
@@ -447,7 +447,7 @@ describe('DAGNodeInfoPanel matrix under tier selection', () => {
       nodeId: 'logical',
       label: 'Logical operator',
       operationType: 'join',
-      statistics: [],
+      information: [],
       observations: [],
       relatedOperators: [selectedOperator],
     });

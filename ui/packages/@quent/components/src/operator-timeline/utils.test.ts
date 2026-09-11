@@ -167,7 +167,7 @@ describe('getOperatorsAtTimestamp', () => {
     endMs,
     rowIndex: 0,
     planId: 'plan',
-    statistics: [],
+    information: [],
   });
 
   it('returns every overlapping operator', () => {

@@ -32,7 +32,14 @@ describe('resolveInspectedNodeData', () => {
             id: 'port-1',
             operator_id: 'join',
             instance_name: 'input_0',
-            statistics: { custom_statistics: { rows: { UInt64: 42 } } },
+            statistics: {
+              information: [
+                {
+                  heading: 'Volume',
+                  items: [{ key: 'rows', value: { UInt64: 42 }, quantity: null }],
+                },
+              ],
+            },
           },
         ],
       },
@@ -42,7 +49,7 @@ describe('resolveInspectedNodeData', () => {
       {
         id: 'port-1',
         name: 'input_0',
-        statistics: [{ key: 'rows', value: 42 }],
+        information: [{ heading: 'Volume', items: [{ key: 'rows', value: 42 }] }],
       },
     ]);
   });

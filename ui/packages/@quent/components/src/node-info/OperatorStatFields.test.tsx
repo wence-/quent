@@ -6,19 +6,29 @@ import { describe, expect, it } from 'vitest';
 import { OperatorStatFields } from './OperatorStatFields';
 
 describe('OperatorStatFields', () => {
-  it('shows flow, ports, observations, and producer-defined statistics', () => {
+  it('renders producer groups in order and resolves a producer-supplied input role', () => {
     render(
       <OperatorStatFields
         operator={{
           nodeId: 'join-1',
           label: 'Join',
           operationType: 'join',
-          statistics: [
-            { key: 'input_rows', value: 100 },
-            { key: 'join_selected_input', value: 1 },
-            { key: 'build_rows', value: 25 },
-            { key: 'tasks_completed', value: 2 },
-            { key: 'selected_input_port_id', value: 'port-1' },
+          information: [
+            {
+              heading: 'zeta_2',
+              items: [
+                { key: 'input_rows', value: 100 },
+                { key: 'mixedCase', value: null },
+              ],
+            },
+            {
+              heading: 'Join',
+              items: [
+                { key: 'join_build_logical_side', value: 'right' },
+                { key: 'selected_input_port_id', value: 'port-1' },
+                { key: 'selected_input_port_role', value: 'build' },
+              ],
+            },
           ],
           observations: [
             {
@@ -34,9 +44,15 @@ describe('OperatorStatFields', () => {
             {
               id: 'port-1',
               name: 'input_1',
-              statistics: [
-                { key: 'direction', value: 'input' },
-                { key: 'rows', value: 25 },
+              information: [
+                {
+                  heading: 'Identity',
+                  items: [{ key: 'direction', value: 'input' }],
+                },
+                {
+                  heading: 'Volume',
+                  items: [{ key: 'rows', value: 25 }],
+                },
               ],
             },
           ],
@@ -44,16 +60,20 @@ describe('OperatorStatFields', () => {
       />
     );
 
-    for (const heading of ['Flow', 'Ports', 'Observations', 'Statistics']) {
-      expect(screen.getByRole('heading', { name: heading })).toBeInTheDocument();
-    }
-    for (const oldHeading of ['Decision', 'Algorithm', 'Execution']) {
-      expect(screen.queryByRole('heading', { name: oldHeading })).not.toBeInTheDocument();
-    }
+    expect(screen.getAllByRole('heading').map(heading => heading.textContent)).toEqual([
+      'zeta_2',
+      'Join',
+      'Ports',
+      'Identity',
+      'Volume',
+      'Observations',
+    ]);
     expect(screen.getByText('input_1')).toBeInTheDocument();
-    expect(screen.getByText('Selected input')).toBeInTheDocument();
+    expect(screen.getByText('Build input')).toBeInTheDocument();
+    expect(screen.queryByText('Selected input port id:')).not.toBeInTheDocument();
+    expect(screen.queryByText('Selected input port role:')).not.toBeInTheDocument();
     expect(screen.getByText('join_build_selected')).toBeInTheDocument();
-    expect(screen.getAllByText('right')).toHaveLength(2);
+    expect(screen.getAllByText('right')).toHaveLength(3);
     expect(screen.getByText('left')).toBeInTheDocument();
     expect(screen.getByText('0.125000 s')).toBeInTheDocument();
     expect(screen.getByText('Raw statistics')).toBeInTheDocument();
@@ -66,9 +86,14 @@ describe('OperatorStatFields', () => {
           nodeId: 'sort-1',
           label: 'Sort',
           operationType: 'sort',
-          statistics: [
-            { key: 'retained_bytes_peak', value: 1048576n },
-            { key: 'first_error', value: null },
+          information: [
+            {
+              heading: 'Sort',
+              items: [
+                { key: 'retained_bytes_peak', value: 1048576n },
+                { key: 'first_error', value: null },
+              ],
+            },
           ],
           observations: [],
         }}
@@ -86,7 +111,7 @@ describe('OperatorStatFields', () => {
           nodeId: 'fused-1',
           label: 'Fused operator',
           operationType: 'fused',
-          statistics: [],
+          information: [],
           observations: [],
         }}
       />

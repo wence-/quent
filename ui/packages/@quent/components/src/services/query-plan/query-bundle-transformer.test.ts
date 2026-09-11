@@ -50,7 +50,20 @@ function makePort(
     id,
     operator_id: operatorId,
     instance_name: null,
-    statistics: customStatistics ? { custom_statistics: customStatistics } : null,
+    statistics: customStatistics
+      ? {
+          information: [
+            {
+              heading: 'Telemetry',
+              items: Object.entries(customStatistics).map(([key, value]) => ({
+                key,
+                value,
+                quantity: null,
+              })),
+            },
+          ],
+        }
+      : null,
   } as Port;
 }
 
@@ -318,14 +331,24 @@ describe('getPlanDAG', () => {
 
     const edge = getPlanDAG(bundle, 'p1').edges[0]!;
 
-    expect(edge.portStats).toEqual([
-      { key: 'messages', value: 4 },
-      { key: 'bytes', value: 4096n },
-      { key: 'bytes_unknown_messages', value: 1 },
+    expect(edge.portInformation).toEqual([
+      {
+        heading: 'Telemetry',
+        items: [
+          { key: 'messages', value: 4 },
+          { key: 'bytes', value: 4096n },
+          { key: 'bytes_unknown_messages', value: 1 },
+        ],
+      },
     ]);
-    expect(edge.targetPortStats).toEqual([
-      { key: 'messages', value: 4 },
-      { key: 'bytes', value: 4096n },
+    expect(edge.targetPortInformation).toEqual([
+      {
+        heading: 'Telemetry',
+        items: [
+          { key: 'messages', value: 4 },
+          { key: 'bytes', value: 4096n },
+        ],
+      },
     ]);
   });
 
@@ -359,8 +382,10 @@ describe('getPlanDAG', () => {
 
     expect(edges).toHaveLength(2);
     expect(edges.map(edge => edge.id)).toEqual(['output-0-input-0', 'output-1-input-1']);
-    expect(edges[0]!.portStats).toEqual([{ key: 'bytes', value: 0 }]);
-    expect(edges[1]!.portStats).toEqual([]);
+    expect(edges[0]!.portInformation).toEqual([
+      { heading: 'Telemetry', items: [{ key: 'bytes', value: 0 }] },
+    ]);
+    expect(edges[1]!.portInformation).toEqual([]);
   });
 
   it('skips edges where the source port is missing from the bundle', () => {

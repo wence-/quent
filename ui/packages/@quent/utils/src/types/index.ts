@@ -31,10 +31,11 @@ export type { FsmTransition } from '../../../../../generated/ts-bindings/FsmTran
 export type { FsmTransitionDecl } from '../../../../../generated/ts-bindings/FsmTransitionDecl';
 export type { FsmTypeDecl } from '../../../../../generated/ts-bindings/FsmTypeDecl';
 export type { FsmUsage } from '../../../../../generated/ts-bindings/FsmUsage';
+export type { InformationGroup } from '../../../../../generated/ts-bindings/InformationGroup';
+export type { InformationItem } from '../../../../../generated/ts-bindings/InformationItem';
 export type { DynamicList } from '../../../../../generated/ts-bindings/DynamicList';
 export type { Operator } from '../../../../../generated/ts-bindings/Operator';
 export type { OperatorFilter } from '../../../../../generated/ts-bindings/OperatorFilter';
-export type { OperatorStatistic } from '../../../../../generated/ts-bindings/OperatorStatistic';
 export type { OperatorStatistics } from '../../../../../generated/ts-bindings/OperatorStatistics';
 export type { PageParams } from '../../../../../generated/ts-bindings/PageParams';
 export type { Plan } from '../../../../../generated/ts-bindings/Plan';

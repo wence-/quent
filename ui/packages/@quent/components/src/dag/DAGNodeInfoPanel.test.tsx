@@ -8,6 +8,10 @@ import { useSetGraphInspection, useSetSelectedNodeData } from '@quent/hooks';
 import { getOperationTypeColor } from '@quent/utils';
 import { DAGNodeInfoPanel } from './DAGNodeInfoPanel';
 
+const information = (items: Array<{ key: string; value: number }>) => [
+  { heading: 'Telemetry', items },
+];
+
 function SelectedNode() {
   const setSelectedNodeData = useSetSelectedNodeData();
 
@@ -18,21 +22,21 @@ function SelectedNode() {
         nodeId: 'logical',
         label: 'Logical join',
         operationType: 'logicaljoin',
-        statistics: [{ key: 'logical_rows', value: 10 }],
+        information: information([{ key: 'logical_rows', value: 10 }]),
         observations: [],
         relatedOperators: [
           {
             nodeId: 'physical-1',
             label: 'Build hash table',
             operationType: 'hashbuild',
-            statistics: [{ key: 'build_rows', value: 20 }],
+            information: information([{ key: 'build_rows', value: 20 }]),
             observations: [],
           },
           {
             nodeId: 'physical-2',
             label: 'Probe hash table',
             operationType: 'hashprobe',
-            statistics: [{ key: 'probe_rows', value: 30 }],
+            information: information([{ key: 'probe_rows', value: 30 }]),
             observations: [],
           },
         ],
@@ -53,14 +57,14 @@ function SwitchSelectedNode() {
           nodeId: 'logical',
           label: 'Logical join',
           operationType: 'logicaljoin',
-          statistics: [],
+          information: [],
           observations: [],
         }
       : {
           nodeId: 'scan',
           label: 'Table scan',
           operationType: 'scan',
-          statistics: [],
+          information: [],
           observations: [],
         };
     setSelectedNodeData({ selectionId: data.nodeId, data });
@@ -88,10 +92,10 @@ function SelectedPipe() {
         port: {
           id: 'source-port',
           name: 'output_0',
-          statistics: [
+          information: information([
             { key: 'rows', value: 0 },
             { key: 'bytes', value: 10 },
-          ],
+          ]),
         },
       },
       target: {
@@ -100,11 +104,11 @@ function SelectedPipe() {
         port: {
           id: 'target-port',
           name: 'input_1',
-          statistics: [
+          information: information([
             { key: 'rows', value: 0 },
             { key: 'bytes', value: 9 },
             { key: 'waits', value: 1 },
-          ],
+          ]),
         },
       },
     });

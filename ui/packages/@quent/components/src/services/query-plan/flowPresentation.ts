@@ -66,7 +66,9 @@ function formatPortInformation(
       ...group.items.map(item => {
         const value = item.value;
         const formatted =
-          value != null && isNumericValue(value) ? formatFlowNumber(item.key, value) : String(value);
+          value != null && isNumericValue(value)
+            ? formatFlowNumber(item.key, value)
+            : String(value);
         return `${item.key}: ${formatted}`;
       }),
     ]),

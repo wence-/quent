@@ -69,9 +69,9 @@ const PARSED_INFORMATION = [
 
 describe('parseOperatorInformation', () => {
   it('preserves exact group and item order, repeated keys, nulls, and quantities', () => {
-    expect(
-      parseOperatorInformation({ statistics: { information: ORDERED_INFORMATION } })
-    ).toEqual(PARSED_INFORMATION);
+    expect(parseOperatorInformation({ statistics: { information: ORDERED_INFORMATION } })).toEqual(
+      PARSED_INFORMATION
+    );
   });
 
   it('returns an empty list when information is absent', () => {

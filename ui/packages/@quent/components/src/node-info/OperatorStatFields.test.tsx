@@ -1,7 +1,7 @@
 // SPDX-FileCopyrightText: Copyright (c) 2026, NVIDIA CORPORATION & AFFILIATES. All rights reserved.
 // SPDX-License-Identifier: Apache-2.0
 
-import { render, screen } from '@testing-library/react';
+import { fireEvent, render, screen } from '@testing-library/react';
 import { describe, expect, it } from 'vitest';
 import { OperatorStatFields } from './OperatorStatFields';
 
@@ -60,21 +60,25 @@ describe('OperatorStatFields', () => {
       />
     );
 
-    expect(screen.getAllByRole('heading').map(heading => heading.textContent)).toEqual([
+    const informationToggles = screen.getAllByRole('button', { name: / information$/ });
+    expect(informationToggles.map(toggle => toggle.textContent)).toEqual([
       'zeta_2',
       'Join',
-      'Ports',
       'Identity',
       'Volume',
-      'Observations',
     ]);
+    expect(
+      informationToggles.every(toggle => toggle.getAttribute('aria-expanded') === 'false')
+    ).toBe(true);
     expect(screen.getByText('input_1')).toBeInTheDocument();
     expect(screen.getByText('Build input')).toBeInTheDocument();
     expect(screen.queryByText('Selected input port id:')).not.toBeInTheDocument();
     expect(screen.queryByText('Selected input port role:')).not.toBeInTheDocument();
     expect(screen.getByText('join_build_selected')).toBeInTheDocument();
-    expect(screen.getAllByText('right')).toHaveLength(3);
-    expect(screen.getByText('left')).toBeInTheDocument();
+    expect(screen.queryByText('input rows:')).not.toBeInTheDocument();
+    fireEvent.click(screen.getByRole('button', { name: 'Toggle zeta_2 information' }));
+    expect(screen.getByText('input rows:')).toBeInTheDocument();
+    expect(screen.getByText('mixedCase:')).toBeInTheDocument();
     expect(screen.getByText('0.125000 s')).toBeInTheDocument();
     expect(screen.getByText('Raw statistics')).toBeInTheDocument();
   });
@@ -100,8 +104,11 @@ describe('OperatorStatFields', () => {
       />
     );
 
-    expect(screen.getAllByText('1.00 MiB').length).toBeGreaterThan(0);
-    expect(screen.getAllByText('—').length).toBeGreaterThan(0);
+    const sortToggle = screen.getByRole('button', { name: 'Toggle Sort information' });
+    expect(sortToggle).toHaveAttribute('aria-expanded', 'false');
+    fireEvent.click(sortToggle);
+    expect(screen.getByText('1.00 MiB')).toBeInTheDocument();
+    expect(screen.getByText('—')).toBeInTheDocument();
   });
 
   it('renders a producer with no statistics or observations', () => {

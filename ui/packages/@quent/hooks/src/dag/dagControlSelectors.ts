@@ -25,6 +25,7 @@ import {
   dagDisplayedNodeIdsAtom,
   graphInspectionActionAtom,
   graphInspectionAtom,
+  hoveredPipeInspectionAtom,
   requestedPipeInspectionAtom,
 } from '../atoms/dagControls';
 
@@ -87,6 +88,16 @@ export function useSetGraphInspection() {
 
 export function useRequestedPipeInspection() {
   return useAtomValue(requestedPipeInspectionAtom);
+}
+export function useSetRequestedPipeInspection() {
+  return useSetAtom(requestedPipeInspectionAtom);
+}
+
+export function useHoveredPipeInspection() {
+  return useAtomValue(hoveredPipeInspectionAtom);
+}
+export function useSetHoveredPipeInspection() {
+  return useSetAtom(hoveredPipeInspectionAtom);
 }
 
 export function useHighlightedNodeIds() {

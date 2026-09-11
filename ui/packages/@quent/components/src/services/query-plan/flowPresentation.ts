@@ -10,6 +10,8 @@ import {
   type InspectedInformationGroup,
 } from '@quent/utils';
 
+export const SELECTED_INPUT_EDGE_COLOR = '#d97706';
+
 function findNumeric(
   information: readonly InspectedInformationGroup[],
   key: string

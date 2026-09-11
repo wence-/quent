@@ -35,6 +35,7 @@ export interface SelectedOperatorPortData {
   id: string;
   name?: string;
   information: InspectedInformationGroup[];
+  connectedPipe?: PipeInspectionKey;
 }
 
 export interface SelectedOperatorGroupData extends SelectedOperatorData {

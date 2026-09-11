@@ -7,13 +7,19 @@ export function getNodeOpacityClass({
   operatorId,
   isDimmed,
   isSelected,
+  inspectionFocusedNodeIds = null,
 }: {
   hoveredStatValues: ReadonlyMap<string, number> | null | undefined;
   highlightedNodeIds: ReadonlySet<string> | null;
   operatorId: string;
   isDimmed: boolean;
   isSelected: boolean;
+  inspectionFocusedNodeIds?: ReadonlySet<string> | null;
 }): string {
+  if (inspectionFocusedNodeIds !== null) {
+    return inspectionFocusedNodeIds.has(operatorId) ? 'opacity-100' : 'opacity-35';
+  }
+
   if (hoveredStatValues) {
     return hoveredStatValues.has(operatorId) || isSelected ? 'opacity-100' : 'opacity-20';
   }

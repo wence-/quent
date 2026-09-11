@@ -162,14 +162,21 @@ const VariableWidthEdge = ({
     }
   }
 
+  const renderedEdge = (data as { edge?: DAGData['edges'][number] })?.edge;
+  const isInspectedPipe =
+    renderedEdge !== undefined &&
+    inspection?.kind === 'pipe' &&
+    renderedEdge.sourcePortId === inspection.sourcePortId &&
+    renderedEdge.targetPortId === inspection.targetPortId;
   const dimFromInteraction = shouldDimEdgeFromInteraction({
     sourceId: source,
     targetId: target,
     selectedNodeIds,
     highlightedNodeIds,
+    pipeInspectionActive: inspection?.kind === 'pipe',
+    isInspectedPipe,
   });
   let isEdgeDimmed = edgeDimmed || dimFromInteraction;
-  const renderedEdge = (data as { edge?: DAGData['edges'][number] })?.edge;
   const isBuildEdge =
     renderedEdge !== undefined &&
     isSelectedInputEdge(renderedEdge, selectedNodeData?.nodeId, selectedNodeData?.information);
@@ -185,11 +192,6 @@ const VariableWidthEdge = ({
     strokeWidth = Math.max(strokeWidth, EDGE_STROKE_WIDTH_MIN + 3);
     isEdgeDimmed = false;
   }
-  const isInspectedPipe =
-    renderedEdge !== undefined &&
-    inspection?.kind === 'pipe' &&
-    renderedEdge.sourcePortId === inspection.sourcePortId &&
-    renderedEdge.targetPortId === inspection.targetPortId;
   if (isInspectedPipe) {
     edgeColor = INSPECTED_PIPE_COLOR;
     strokeWidth = Math.max(strokeWidth, EDGE_STROKE_WIDTH_MIN + 3);

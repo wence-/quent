@@ -28,4 +28,30 @@ describe('getNodeOpacityClass', () => {
       })
     ).toBe('opacity-35');
   });
+
+  it('lets pipe inspection override the previous operator selection', () => {
+    expect(
+      getNodeOpacityClass({
+        hoveredStatValues: null,
+        highlightedNodeIds: new Set(['previously-selected']),
+        operatorId: 'previously-selected',
+        isDimmed: false,
+        isSelected: true,
+        inspectionFocusedNodeIds: new Set(['source', 'target']),
+      })
+    ).toBe('opacity-35');
+  });
+
+  it('keeps only the hovered endpoint prominent when endpoint focus narrows', () => {
+    expect(
+      getNodeOpacityClass({
+        hoveredStatValues: null,
+        highlightedNodeIds: new Set(['source']),
+        operatorId: 'target',
+        isDimmed: false,
+        isSelected: false,
+        inspectionFocusedNodeIds: new Set(['source']),
+      })
+    ).toBe('opacity-35');
+  });
 });

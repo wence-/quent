@@ -31,12 +31,18 @@ function EndpointDetails({ label, port }: { label: string; port: InspectedPortDa
         <DataText className="text-xs text-muted-foreground">No statistics</DataText>
       ) : (
         port.information.map((group, groupIndex) => (
-          <div key={`${group.heading}-${groupIndex}`} className="mt-1 border-t pt-1 first:border-t-0">
+          <div
+            key={`${group.heading}-${groupIndex}`}
+            className="mt-1 border-t pt-1 first:border-t-0"
+          >
             <h5 className="text-[11px] font-semibold uppercase tracking-wide text-muted-foreground">
               {group.heading}
             </h5>
             {group.items.map((item, itemIndex) => (
-              <div key={`${item.key}-${itemIndex}`} className="flex items-start justify-between gap-2 text-xs">
+              <div
+                key={`${item.key}-${itemIndex}`}
+                className="flex items-start justify-between gap-2 text-xs"
+              >
                 <DataText className="capitalize">{item.key.replace(/_/g, ' ')}:</DataText>
                 <DataText className="text-muted-foreground ml-1">
                   {displayValue(item.value)}
@@ -76,9 +82,13 @@ export function PipeDetailsBlock({ pipe }: { pipe: PipeInspection }) {
           {comparedItems.map(({ key, occurrence, source, target }) => {
             const agrees = source && target && valuesEqual(source.value, target.value);
             return (
-              <div key={`${key}-${occurrence}`} className="flex items-start justify-between gap-2 text-xs">
+              <div
+                key={`${key}-${occurrence}`}
+                className="flex items-start justify-between gap-2 text-xs"
+              >
                 <DataText className="capitalize">
-                  {key.replace(/_/g, ' ')}{occurrence > 0 ? ` (${occurrence + 1})` : ''}:
+                  {key.replace(/_/g, ' ')}
+                  {occurrence > 0 ? ` (${occurrence + 1})` : ''}:
                 </DataText>
                 <DataText className="text-muted-foreground">
                   {!source || !target ? 'Missing endpoint' : agrees ? 'Agrees' : 'Differs'}

@@ -98,7 +98,13 @@ function humanizeRole(role: string): string {
   return words ? `${words[0].toUpperCase()}${words.slice(1)} input` : 'Referenced input';
 }
 
-function PortRows({ port, relationLabel }: { port: InspectedPortData; relationLabel: string | null }) {
+function PortRows({
+  port,
+  relationLabel,
+}: {
+  port: InspectedPortData;
+  relationLabel: string | null;
+}) {
   const direction = findInformationItem(port.information, 'direction')?.value;
   return (
     <div className="border-t first:border-t-0 py-1">

@@ -29,9 +29,7 @@ const EDGE: DAGEdge = {
       ],
     },
   ],
-  targetPortInformation: [
-    { heading: 'Volume', items: [{ key: 'rows', value: 1499 }] },
-  ],
+  targetPortInformation: [{ heading: 'Volume', items: [{ key: 'rows', value: 1499 }] }],
 };
 
 describe('flow presentation', () => {

@@ -27,6 +27,7 @@ import {
   useSetHighlightedNodeIds,
   COLOR_REGISTRY_KEYS,
   useColorResolver,
+  useGraphInspection,
 } from '@quent/hooks';
 import { formatStatWithQuantity, type QuantitySpec } from '@quent/utils';
 import { parseOperatorInformation } from '../lib/queryBundle.utils';
@@ -86,6 +87,7 @@ export const QueryPlanNode = memo(({ data }: { data: QueryPlanNodeData }) => {
   // doesn't dim when nothing visible would be highlighted.
   const setHighlightState = useSetHighlightedNodeIds();
   const highlightState = useEffectiveHighlightedNodeIds();
+  const inspection = useGraphInspection();
   const hoveredStat = useEffectiveHoveredStat();
   const [nodePalette] = useNodeColorPalette();
   const resolveOperatorTypeColor = useColorResolver(COLOR_REGISTRY_KEYS.OPERATOR_TYPES);
@@ -102,6 +104,17 @@ export const QueryPlanNode = memo(({ data }: { data: QueryPlanNodeData }) => {
     data.metadata?.relatedOperatorIds
   );
   const [isHoveredLocal, setIsHoveredLocal] = useState(false);
+  const pipeEndpointIds = useMemo(() => {
+    if (inspection?.kind !== 'pipe') {
+      return null;
+    }
+    const endpointIds = new Set([inspection.source.operatorId, inspection.target.operatorId]);
+    const hoveredEndpointId = highlightState.primaryOperatorId;
+    return hoveredEndpointId !== null && endpointIds.has(hoveredEndpointId)
+      ? new Set([hoveredEndpointId])
+      : endpointIds;
+  }, [highlightState.primaryOperatorId, inspection]);
+  const isVisuallySelected = inspection?.kind !== 'pipe' && isSelected;
 
   const resolvedLabel = useMemo(() => {
     if (nodeLabelField === NODE_LABEL_FIELD.ID) {
@@ -131,7 +144,7 @@ export const QueryPlanNode = memo(({ data }: { data: QueryPlanNodeData }) => {
   const baseColor = resolveOperatorTypeColor(data.operationType);
   const activeColor = fieldColor ?? baseColor;
   const bgColor =
-    fieldColor ?? withOpacity(baseColor, isSelected ? 0.3 : isHoveredLocal ? 0.22 : 0.15);
+    fieldColor ?? withOpacity(baseColor, isVisuallySelected ? 0.3 : isHoveredLocal ? 0.22 : 0.15);
 
   const heatmapColor = useMemo(() => {
     if (!hoveredStat) {
@@ -151,10 +164,11 @@ export const QueryPlanNode = memo(({ data }: { data: QueryPlanNodeData }) => {
     highlightedNodeIds: highlightState.ids,
     operatorId,
     isDimmed,
-    isSelected,
+    isSelected: isVisuallySelected,
+    inspectionFocusedNodeIds: pipeEndpointIds,
   });
 
-  const isActiveHighlight = isHighlighted && !isSelected;
+  const isActiveHighlight = isHighlighted && !isVisuallySelected;
 
   const isBottomToTop =
     (data.layoutDirection ?? DAG_LAYOUT_DIRECTION.BOTTOM_TO_TOP) ===
@@ -184,9 +198,9 @@ export const QueryPlanNode = memo(({ data }: { data: QueryPlanNodeData }) => {
 
   const nodeContent = (
     <div
-      className={cn(nodeVariants({ selected: isSelected }), {
-        'shadow-glow': isSelected || isActiveHighlight,
-        'shadow-node': !isSelected && !isActiveHighlight,
+      className={cn(nodeVariants({ selected: isVisuallySelected }), {
+        'shadow-glow': isVisuallySelected || isActiveHighlight,
+        'shadow-node': !isVisuallySelected && !isActiveHighlight,
       })}
       onMouseEnter={onMouseEnter}
       onMouseLeave={onMouseLeave}
@@ -206,7 +220,7 @@ export const QueryPlanNode = memo(({ data }: { data: QueryPlanNodeData }) => {
       <DataText
         as="div"
         className={cn('text-sm break-words text-center font-normal', {
-          'font-bold': data.operationType === 'stage' || isSelected,
+          'font-bold': data.operationType === 'stage' || isVisuallySelected,
         })}
       >
         {resolvedLabel}

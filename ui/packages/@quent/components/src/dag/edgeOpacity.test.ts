@@ -26,4 +26,30 @@ describe('shouldDimEdgeFromInteraction', () => {
       })
     ).toBe(false);
   });
+
+  it('dims every other edge while inspecting a pipe, including selected-node edges', () => {
+    expect(
+      shouldDimEdgeFromInteraction({
+        sourceId: 'selected',
+        targetId: 'other',
+        selectedNodeIds: new Set(['selected']),
+        highlightedNodeIds: new Set(['selected']),
+        pipeInspectionActive: true,
+        isInspectedPipe: false,
+      })
+    ).toBe(true);
+  });
+
+  it('keeps the inspected pipe visible regardless of the previous selection', () => {
+    expect(
+      shouldDimEdgeFromInteraction({
+        sourceId: 'source',
+        targetId: 'target',
+        selectedNodeIds: new Set(['other']),
+        highlightedNodeIds: new Set(['other']),
+        pipeInspectionActive: true,
+        isInspectedPipe: true,
+      })
+    ).toBe(false);
+  });
 });

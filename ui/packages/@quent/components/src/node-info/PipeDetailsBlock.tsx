@@ -2,6 +2,11 @@
 // SPDX-License-Identifier: Apache-2.0
 
 import {
+  useHighlightedNodeIds,
+  useOperatorSelectionActions,
+} from '@quent/hooks';
+import {
+  cn,
   informationItems,
   type InspectedInformationItem,
   type PipeInspection,
@@ -18,11 +23,66 @@ function displayValue(value: StatValue): string {
   return Array.isArray(value) ? value.map(String).join(', ') : String(value);
 }
 
-function EndpointDetails({ label, port }: { label: string; port: SelectedOperatorPortData }) {
+function EndpointDetails({
+  side,
+  operatorId,
+  operatorLabel,
+  port,
+}: {
+  side: 'Source' | 'Target';
+  operatorId: string;
+  operatorLabel: string;
+  port: SelectedOperatorPortData;
+}) {
+  const updateOperatorSelection = useOperatorSelectionActions();
+  const [highlightState, setHighlightState] = useHighlightedNodeIds();
+  const isHighlighted =
+    highlightState.source === 'dag' && highlightState.primaryOperatorId === operatorId;
+  const setHighlighted = () => {
+    setHighlightState(previous => ({
+      ...previous,
+      ids: new Set([operatorId]),
+      source: 'dag',
+      primaryOperatorId: operatorId,
+    }));
+  };
+  const clearHighlighted = () => {
+    setHighlightState(previous =>
+      previous.source === 'dag' && previous.primaryOperatorId === operatorId
+        ? { ...previous, ids: null, source: null, primaryOperatorId: null }
+        : previous
+    );
+  };
   return (
-    <section>
+    <section
+      data-testid={`pipe-endpoint-${side.toLowerCase()}`}
+      className={cn('rounded px-1 transition-colors', isHighlighted && 'bg-primary/10')}
+      onMouseEnter={setHighlighted}
+      onMouseLeave={clearHighlighted}
+    >
       <h4 className="text-[11px] font-semibold uppercase tracking-wide text-muted-foreground">
-        {label}
+        <button
+          type="button"
+          className="cursor-pointer rounded underline decoration-muted-foreground/50 underline-offset-2 hover:text-primary"
+          aria-label={`Inspect ${side.toLowerCase()} operator ${operatorLabel}`}
+          onClick={() => {
+            clearHighlighted();
+            updateOperatorSelection({
+              type: 'replace',
+              selections: [
+                {
+                  selectionId: operatorId,
+                  label: operatorLabel,
+                  operatorIds: new Set([operatorId]),
+                },
+              ],
+            });
+          }}
+          onFocus={setHighlighted}
+          onBlur={clearHighlighted}
+        >
+          {side} · {operatorLabel}
+        </button>
       </h4>
       <div className="text-xs">
         <DataText>{port.name ?? port.id}</DataText>
@@ -71,8 +131,18 @@ export function PipeDetailsBlock({ pipe }: { pipe: PipeInspection }) {
 
   return (
     <div className="grid grid-cols-1 gap-3 pt-1.5 pr-2 sm:grid-cols-2">
-      <EndpointDetails label={`Source · ${pipe.source.operatorLabel}`} port={pipe.source.port} />
-      <EndpointDetails label={`Target · ${pipe.target.operatorLabel}`} port={pipe.target.port} />
+      <EndpointDetails
+        side="Source"
+        operatorId={pipe.source.operatorId}
+        operatorLabel={pipe.source.operatorLabel}
+        port={pipe.source.port}
+      />
+      <EndpointDetails
+        side="Target"
+        operatorId={pipe.target.operatorId}
+        operatorLabel={pipe.target.operatorLabel}
+        port={pipe.target.port}
+      />
       {comparedItems.length > 0 && (
         <section className="sm:col-span-2 border-t pt-1">
           <h4 className="text-[11px] font-semibold uppercase tracking-wide text-muted-foreground">

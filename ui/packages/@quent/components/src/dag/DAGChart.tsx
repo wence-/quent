@@ -90,6 +90,8 @@ const ARROW_WIDTH_BASE = 8;
 const ARROW_DEPTH_RATIO = 0.6;
 const FALLBACK_NORMALIZED_T = 0.5; // used when min === max
 const INSPECTED_PIPE_COLOR = '#2563eb';
+const HOVERED_PIPE_HALO_EXTRA_WIDTH = 8;
+const HOVERED_PIPE_HALO_OPACITY = 0.4;
 
 // Layout constants
 const FIT_VIEW_PADDING = 0.1;
@@ -251,6 +253,17 @@ const VariableWidthEdge = ({
           />
         </marker>
       </defs>
+      {isHoveredPipe && (
+        <path
+          data-testid={`pipe-hover-halo-${id}`}
+          d={edgePath}
+          fill="none"
+          stroke={INSPECTED_PIPE_COLOR}
+          strokeWidth={strokeWidth + HOVERED_PIPE_HALO_EXTRA_WIDTH}
+          opacity={HOVERED_PIPE_HALO_OPACITY}
+          pointerEvents="none"
+        />
+      )}
       <path
         id={id}
         className="react-flow__edge-path"
@@ -311,6 +324,7 @@ const VariableWidthEdge = ({
               pointerEvents: 'all',
               opacity: isEdgeDimmed ? EDGE_DIMMED_OPACITY : 1,
               transition: `opacity ${EDGE_TRANSITION_MS}ms`,
+              boxShadow: isHoveredPipe ? `0 0 0 2px ${INSPECTED_PIPE_COLOR}` : undefined,
             }}
             className="text-[10px] font-medium px-1 py-0.5 rounded bg-background/80 text-muted-foreground border border-border/50"
             onMouseEnter={event =>

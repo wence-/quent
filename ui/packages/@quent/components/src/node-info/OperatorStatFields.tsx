@@ -4,6 +4,7 @@
 import { useState } from 'react';
 import { ChevronRight } from 'lucide-react';
 import {
+  useHoveredPipeInspection,
   useSetHoveredPipeInspection,
   useSetRequestedPipeInspection,
   type InspectedOperatorData,
@@ -112,10 +113,14 @@ function PortRows({
   relationLabel: string | null;
 }) {
   const [isOpen, setIsOpen] = useState(false);
+  const hoveredPipeInspection = useHoveredPipeInspection();
   const setRequestedPipeInspection = useSetRequestedPipeInspection();
   const setHoveredPipeInspection = useSetHoveredPipeInspection();
   const direction = findInformationItem(port.information, 'direction')?.value;
   const label = port.name ?? port.id;
+  const isHovered =
+    hoveredPipeInspection?.sourcePortId === port.connectedPipe?.sourcePortId &&
+    hoveredPipeInspection?.targetPortId === port.connectedPipe?.targetPortId;
   const setHovered = () => {
     if (port.connectedPipe) {
       setHoveredPipeInspection(port.connectedPipe);
@@ -133,7 +138,10 @@ function PortRows({
   return (
     <div
       data-testid={`port-row-${port.id}`}
-      className="flex gap-2 border-t py-1.5 first:border-t-0"
+      className={cn(
+        'flex gap-2 border-t py-1.5 transition-colors first:border-t-0',
+        isHovered && 'bg-primary/10'
+      )}
       onMouseEnter={setHovered}
       onMouseLeave={clearHovered}
     >

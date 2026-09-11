@@ -4,7 +4,12 @@
 import { useEffect, useState } from 'react';
 import { fireEvent, render, screen, within } from '@testing-library/react';
 import { Provider } from 'jotai';
-import { useSetGraphInspection, useSetSelectedNodeData } from '@quent/hooks';
+import {
+  useHighlightedNodeIds,
+  useSelectedNodeIds,
+  useSetGraphInspection,
+  useSetSelectedNodeData,
+} from '@quent/hooks';
 import { getOperationTypeColor } from '@quent/utils';
 import { DAGNodeInfoPanel } from './DAGNodeInfoPanel';
 
@@ -115,6 +120,19 @@ function SelectedPipe() {
   }, [setGraphInspection]);
 
   return <DAGNodeInfoPanel />;
+}
+
+function GraphInteractionState() {
+  const selectedNodeIds = useSelectedNodeIds();
+  const [highlightState] = useHighlightedNodeIds();
+  return (
+    <>
+      <output data-testid="selected-operator-ids">{[...selectedNodeIds].join(',')}</output>
+      <output data-testid="highlighted-operator-ids">
+        {highlightState.ids ? [...highlightState.ids].join(',') : 'none'}
+      </output>
+    </>
+  );
 }
 
 describe('DAGNodeInfoPanel', () => {
@@ -230,5 +248,31 @@ describe('DAGNodeInfoPanel', () => {
     expect(screen.getByText('Agrees')).toBeInTheDocument();
     expect(screen.getByText('Differs')).toBeInTheDocument();
     expect(screen.getByText('Missing endpoint')).toBeInTheDocument();
+  });
+
+  it('highlights and selects operators from pipe endpoint headers', async () => {
+    render(
+      <Provider>
+        <SelectedPipe />
+        <GraphInteractionState />
+      </Provider>
+    );
+
+    const sourceEndpoint = await screen.findByTestId('pipe-endpoint-source');
+    const sourceButton = screen.getByRole('button', {
+      name: 'Inspect source operator Scan',
+    });
+
+    fireEvent.mouseEnter(sourceEndpoint);
+    expect(screen.getByTestId('highlighted-operator-ids')).toHaveTextContent('source');
+    expect(sourceEndpoint).toHaveClass('bg-primary/10');
+    fireEvent.mouseLeave(sourceEndpoint);
+    expect(screen.getByTestId('highlighted-operator-ids')).toHaveTextContent('none');
+
+    fireEvent.focus(sourceButton);
+    expect(screen.getByTestId('highlighted-operator-ids')).toHaveTextContent('source');
+    fireEvent.click(sourceButton);
+    expect(screen.getByTestId('selected-operator-ids')).toHaveTextContent('source');
+    expect(screen.getByTestId('highlighted-operator-ids')).toHaveTextContent('none');
   });
 });

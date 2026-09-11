@@ -148,6 +148,7 @@ describe('OperatorStatFields', () => {
 
     fireEvent.mouseEnter(portRow);
     expect(screen.getByTestId('hovered-pipe')).toHaveTextContent('output-port:input-port');
+    expect(portRow).toHaveClass('bg-primary/10');
     fireEvent.mouseLeave(portRow);
     expect(screen.getByTestId('hovered-pipe')).toHaveTextContent('none');
 

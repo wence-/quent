@@ -2,7 +2,7 @@
 // SPDX-License-Identifier: Apache-2.0
 
 import { describe, expect, it } from 'vitest';
-import type { DAGNode } from '@quent/utils';
+import type { DAGEdge, DAGNode } from '@quent/utils';
 import { getEdgeInteractionWidth, isEdgeInspectionKey } from './edgeInteraction';
 import { resolveInspectedNodeData, resolveInspectedNodeSelections } from './dagSelection';
 
@@ -45,13 +45,58 @@ describe('resolveInspectedNodeData', () => {
       },
     };
 
-    expect(resolveInspectedNodeData([node], new Set(['join']))?.ports).toEqual([
+    const edges: DAGEdge[] = [
+      {
+        id: 'pipe-1',
+        source: 'scan',
+        target: 'join',
+        sourcePortId: 'scan-output',
+        targetPortId: 'port-1',
+      },
+    ];
+
+    expect(resolveInspectedNodeData([node], new Set(['join']), edges)?.ports).toEqual([
       {
         id: 'port-1',
         name: 'input_0',
         information: [{ heading: 'Volume', items: [{ key: 'rows', value: 42 }] }],
+        connectedPipe: { sourcePortId: 'scan-output', targetPortId: 'port-1' },
       },
     ]);
+  });
+
+  it('does not guess a connection for an unconnected or ambiguous port', () => {
+    const node: DAGNode = {
+      id: 'join',
+      label: 'Join',
+      type: 'join',
+      metadata: {
+        ports: [{ id: 'port-1', operator_id: 'join', instance_name: 'input_0' }],
+      },
+    };
+    const repeatedEdges: DAGEdge[] = [
+      {
+        id: 'pipe-1',
+        source: 'left',
+        target: 'join',
+        sourcePortId: 'left-output',
+        targetPortId: 'port-1',
+      },
+      {
+        id: 'pipe-2',
+        source: 'right',
+        target: 'join',
+        sourcePortId: 'right-output',
+        targetPortId: 'port-1',
+      },
+    ];
+
+    expect(resolveInspectedNodeData([node], new Set(['join']))?.ports?.[0].connectedPipe).toBe(
+      undefined
+    );
+    expect(
+      resolveInspectedNodeData([node], new Set(['join']), repeatedEdges)?.ports?.[0].connectedPipe
+    ).toBe(undefined);
   });
 
   it('resolves the primary operator from a hydrated grouped selection', () => {

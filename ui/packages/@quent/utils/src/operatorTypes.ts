@@ -36,6 +36,7 @@ export interface InspectedPortData {
   id: string;
   name?: string;
   information: InspectedInformationGroup[];
+  connectedPipe?: PipeInspectionKey;
 }
 
 export interface InspectedNodeData extends InspectedOperatorData {

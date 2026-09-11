@@ -47,6 +47,9 @@ export const graphInspectionAtom = atom<InspectedGraphItem | null>(null);
 /** Structural pipe key requested by direct interaction or deep-link hydration. */
 export const requestedPipeInspectionAtom = atom<PipeInspectionKey | null>(null);
 
+/** Structural pipe key transiently emphasized by a details-panel hover or focus. */
+export const hoveredPipeInspectionAtom = atom<PipeInspectionKey | null>(null);
+
 export const graphInspectionActionAtom = atom(
   null,
   (get, set, inspection: InspectedGraphItem | null) => {

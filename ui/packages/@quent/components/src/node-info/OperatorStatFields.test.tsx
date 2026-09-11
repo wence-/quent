@@ -2,8 +2,25 @@
 // SPDX-License-Identifier: Apache-2.0
 
 import { fireEvent, render, screen } from '@testing-library/react';
+import { Provider } from 'jotai';
 import { describe, expect, it } from 'vitest';
+import { useHoveredPipeInspection, useRequestedPipeInspection } from '@quent/hooks';
 import { OperatorStatFields } from './OperatorStatFields';
+
+function PipeInteractionState() {
+  const requested = useRequestedPipeInspection();
+  const hovered = useHoveredPipeInspection();
+  return (
+    <>
+      <output data-testid="requested-pipe">
+        {requested ? `${requested.sourcePortId}:${requested.targetPortId}` : 'none'}
+      </output>
+      <output data-testid="hovered-pipe">
+        {hovered ? `${hovered.sourcePortId}:${hovered.targetPortId}` : 'none'}
+      </output>
+    </>
+  );
+}
 
 describe('OperatorStatFields', () => {
   it('renders producer groups in order and resolves a producer-supplied input role', () => {
@@ -44,6 +61,7 @@ describe('OperatorStatFields', () => {
             {
               id: 'port-1',
               name: 'input_1',
+              connectedPipe: { sourcePortId: 'source-port', targetPortId: 'port-1' },
               information: [
                 {
                   heading: 'Identity',
@@ -60,18 +78,31 @@ describe('OperatorStatFields', () => {
       />
     );
 
-    const informationToggles = screen.getAllByRole('button', { name: / information$/ });
-    expect(informationToggles.map(toggle => toggle.textContent)).toEqual([
-      'zeta_2',
-      'Join',
-      'Identity',
-      'Volume',
-    ]);
+    const informationToggles = screen
+      .getAllByRole('button', { name: / information$/ })
+      .filter(toggle => !toggle.getAttribute('aria-label')?.includes(' port information'));
+    expect(informationToggles.map(toggle => toggle.textContent)).toEqual(['zeta_2', 'Join']);
     expect(
       informationToggles.every(toggle => toggle.getAttribute('aria-expanded') === 'false')
     ).toBe(true);
     expect(screen.getByText('input_1')).toBeInTheDocument();
     expect(screen.getByText('Build input')).toBeInTheDocument();
+    expect(screen.getByTestId('port-relationship-bar-port-1')).toHaveStyle({
+      backgroundColor: '#d97706',
+    });
+    const portToggle = screen.getByRole('button', {
+      name: 'Toggle input_1 port information',
+    });
+    expect(portToggle).toHaveAttribute('aria-expanded', 'false');
+    fireEvent.click(portToggle);
+    expect(screen.getByRole('button', { name: 'Toggle Identity information' })).toHaveAttribute(
+      'aria-expanded',
+      'false'
+    );
+    expect(screen.getByRole('button', { name: 'Toggle Volume information' })).toHaveAttribute(
+      'aria-expanded',
+      'false'
+    );
     expect(screen.queryByText('Selected input port id:')).not.toBeInTheDocument();
     expect(screen.queryByText('Selected input port role:')).not.toBeInTheDocument();
     expect(screen.getByText('join_build_selected')).toBeInTheDocument();
@@ -81,6 +112,50 @@ describe('OperatorStatFields', () => {
     expect(screen.getByText('mixedCase:')).toBeInTheDocument();
     expect(screen.getByText('0.125000 s')).toBeInTheDocument();
     expect(screen.getByText('Raw statistics')).toBeInTheDocument();
+  });
+
+  it('requests and transiently highlights the pipe connected to a port', () => {
+    render(
+      <Provider>
+        <OperatorStatFields
+          operator={{
+            nodeId: 'operator-1',
+            label: 'Operator',
+            operationType: 'operator',
+            information: [],
+            observations: [],
+            ports: [
+              {
+                id: 'input-port',
+                name: 'input_0',
+                information: [],
+                connectedPipe: {
+                  sourcePortId: 'output-port',
+                  targetPortId: 'input-port',
+                },
+              },
+            ],
+          }}
+        />
+        <PipeInteractionState />
+      </Provider>
+    );
+
+    const portRow = screen.getByTestId('port-row-input-port');
+    const pipeButton = screen.getByRole('button', {
+      name: 'Inspect pipe connected to input_0',
+    });
+
+    fireEvent.mouseEnter(portRow);
+    expect(screen.getByTestId('hovered-pipe')).toHaveTextContent('output-port:input-port');
+    fireEvent.mouseLeave(portRow);
+    expect(screen.getByTestId('hovered-pipe')).toHaveTextContent('none');
+
+    fireEvent.focus(pipeButton);
+    expect(screen.getByTestId('hovered-pipe')).toHaveTextContent('output-port:input-port');
+    fireEvent.click(pipeButton);
+    expect(screen.getByTestId('requested-pipe')).toHaveTextContent('output-port:input-port');
+    expect(screen.getByTestId('hovered-pipe')).toHaveTextContent('none');
   });
 
   it('renders bigint values with inferred units and null as unavailable', () => {

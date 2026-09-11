@@ -45,6 +45,7 @@ import {
   useSelectedNodeData,
   useGraphInspection,
   useRequestedPipeInspection,
+  useHoveredPipeInspection,
   useSetGraphInspection,
   useDataFlowEnabled,
   useDataFlowMeta,
@@ -54,14 +55,15 @@ import type { DAGData } from '../services/query-plan/types';
 import { QueryPlanNode, type QueryPlanNodeData } from '../query-plan/QueryPlanNode';
 import { DAGLegend } from './DAGLegend';
 import { PointerTooltipPortal, type PointerPosition } from '../ui/pointer-tooltip-portal';
-import { inspectPipe, resolveInspectedNodeSelections, resolvePipeInspection } from './dagSelection';
+import {
+  inspectPipe,
+  resolveInspectedNodeData,
+  resolveInspectedNodeSelections,
+  resolvePipeInspection,
+} from './dagSelection';
 import { shouldDimEdgeFromInteraction } from './edgeOpacity';
 import { getEdgeInteractionWidth, isEdgeInspectionKey } from './edgeInteraction';
-import {
-  parseOperatorInformation,
-  parseOperatorObservations,
-  parsePortInformation,
-} from '../lib/queryBundle.utils';
+import { parseOperatorInformation } from '../lib/queryBundle.utils';
 import {
   continuousColor,
   getOperationTypeColor,
@@ -74,6 +76,7 @@ import {
   formatEdgeTooltip,
   isSelectedInputEdge,
   normalizeEdgeWidth,
+  SELECTED_INPUT_EDGE_COLOR,
 } from '../services/query-plan/flowPresentation';
 
 // Edge geometry constants
@@ -86,7 +89,6 @@ const ARROW_WIDTH_MULTIPLIER = 1.5;
 const ARROW_WIDTH_BASE = 8;
 const ARROW_DEPTH_RATIO = 0.6;
 const FALLBACK_NORMALIZED_T = 0.5; // used when min === max
-const SELECTED_INPUT_EDGE_COLOR = '#d97706';
 const INSPECTED_PIPE_COLOR = '#2563eb';
 
 // Layout constants
@@ -118,6 +120,7 @@ const VariableWidthEdge = ({
   const selectedNodeIds = useSelectedNodeIds();
   const selectedNodeData = useSelectedNodeData();
   const inspection = useGraphInspection();
+  const hoveredPipeInspection = useHoveredPipeInspection();
   const highlightedNodeIds = useEffectiveHighlightedNodeIds().ids;
   const [edgeWidthField] = useSelectedEdgeWidthField();
   const [edgeColorField] = useSelectedEdgeColorField();
@@ -171,6 +174,14 @@ const VariableWidthEdge = ({
   if (isBuildEdge) {
     edgeColor = SELECTED_INPUT_EDGE_COLOR;
     strokeWidth = Math.max(strokeWidth, EDGE_STROKE_WIDTH_MIN + 2);
+  }
+  const isHoveredPipe =
+    renderedEdge !== undefined &&
+    renderedEdge.sourcePortId === hoveredPipeInspection?.sourcePortId &&
+    renderedEdge.targetPortId === hoveredPipeInspection?.targetPortId;
+  if (isHoveredPipe) {
+    strokeWidth = Math.max(strokeWidth, EDGE_STROKE_WIDTH_MIN + 3);
+    isEdgeDimmed = false;
   }
   const isInspectedPipe =
     renderedEdge !== undefined &&
@@ -408,7 +419,7 @@ const FlowLayout = ({
 
   useEffect(() => {
     const operatorIds = new Set(hydratedNodeIdsKey === '' ? [] : hydratedNodeIdsKey.split('\0'));
-    const resolved = resolveInspectedNodeSelections(data.nodes, operatorIds);
+    const resolved = resolveInspectedNodeSelections(data.nodes, operatorIds, data.edges);
     if (controlledSelectedNodeIds !== undefined) {
       updateOperatorSelection({
         type: 'replace',
@@ -424,7 +435,13 @@ const FlowLayout = ({
       return;
     }
     updateOperatorSelection({ type: 'hydrate', selections: resolved.selections });
-  }, [controlledSelectedNodeIds, data.nodes, hydratedNodeIdsKey, updateOperatorSelection]);
+  }, [
+    controlledSelectedNodeIds,
+    data.edges,
+    data.nodes,
+    hydratedNodeIdsKey,
+    updateOperatorSelection,
+  ]);
 
   // Publish the set of operator IDs visible in this DAG so other consumers
   // (effective highlight/heatmap atoms) can decide whether a hover-driven
@@ -558,33 +575,17 @@ const FlowLayout = ({
         const newSet = new Set(selectionIds);
         setSelectedNodeIds(newSet);
         setSelectedOperatorLabel(node.data.label);
-        setSelectedNodeData({
-          selectionId: node.id,
-          data: {
-            nodeId: node.id,
-            label: node.data.label,
-            operationType: node.data.operationType,
-            information: parseOperatorInformation(node.data.metadata?.rawNode),
-            observations: parseOperatorObservations(node.data.metadata?.rawNode),
-            ports: node.data.metadata?.ports?.map(port => ({
-              id: port.id,
-              ...(port.instance_name ? { name: port.instance_name } : {}),
-              information: parsePortInformation(port),
-            })),
-            relatedOperators: node.data.metadata?.relatedOperators?.map(operator => ({
-              nodeId: operator.id,
-              label: operator.instance_name ?? operator.operator_type_name ?? 'Operator',
-              operationType: operator.operator_type_name?.toLowerCase() ?? 'operator',
-              information: parseOperatorInformation(operator),
-              observations: parseOperatorObservations(operator),
-            })),
-          },
-        });
+        const inspectedData = resolveInspectedNodeData(data.nodes, newSet, data.edges);
+        if (inspectedData) {
+          setSelectedNodeData({ selectionId: node.id, data: inspectedData });
+        }
         onSelectionChange?.(selectionIds);
       }
     },
     [
       getSelectionIds,
+      data.edges,
+      data.nodes,
       selectedNodeIds,
       setSelectedNodeIds,
       setSelectedOperatorLabel,

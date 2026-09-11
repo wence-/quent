@@ -1,8 +1,15 @@
 // SPDX-FileCopyrightText: Copyright (c) 2026, NVIDIA CORPORATION & AFFILIATES. All rights reserved.
 // SPDX-License-Identifier: Apache-2.0
 
-import type { InspectedOperatorData } from '@quent/hooks';
+import { useState } from 'react';
+import { ChevronRight } from 'lucide-react';
 import {
+  useSetHoveredPipeInspection,
+  useSetRequestedPipeInspection,
+  type InspectedOperatorData,
+} from '@quent/hooks';
+import {
+  cn,
   findInformationItem,
   formatStatWithQuantity,
   isNumericValue,
@@ -13,6 +20,7 @@ import {
   type StatValue,
 } from '@quent/utils';
 import { DataText } from '../ui/data-text';
+import { SELECTED_INPUT_EDGE_COLOR } from '../services/query-plan/flowPresentation';
 import { InformationGroup } from './InformationGroup';
 
 type PresentedStatistic = InspectedInformationGroup['items'][number];
@@ -103,19 +111,79 @@ function PortRows({
   port: InspectedPortData;
   relationLabel: string | null;
 }) {
+  const [isOpen, setIsOpen] = useState(false);
+  const setRequestedPipeInspection = useSetRequestedPipeInspection();
+  const setHoveredPipeInspection = useSetHoveredPipeInspection();
   const direction = findInformationItem(port.information, 'direction')?.value;
+  const label = port.name ?? port.id;
+  const setHovered = () => {
+    if (port.connectedPipe) {
+      setHoveredPipeInspection(port.connectedPipe);
+    }
+  };
+  const clearHovered = () => {
+    setHoveredPipeInspection(current =>
+      current?.sourcePortId === port.connectedPipe?.sourcePortId &&
+      current?.targetPortId === port.connectedPipe?.targetPortId
+        ? null
+        : current
+    );
+  };
+
   return (
-    <div className="border-t first:border-t-0 py-1">
-      <div className="flex items-center justify-between text-xs font-medium">
-        <DataText>{port.name ?? port.id}</DataText>
-        {direction != null && (
-          <DataText className="text-muted-foreground">{String(direction)}</DataText>
-        )}
-        {relationLabel && (
-          <DataText className="rounded bg-primary/15 px-1 text-primary">{relationLabel}</DataText>
-        )}
+    <div
+      data-testid={`port-row-${port.id}`}
+      className="flex gap-2 border-t py-1.5 first:border-t-0"
+      onMouseEnter={setHovered}
+      onMouseLeave={clearHovered}
+    >
+      <span
+        aria-hidden="true"
+        data-testid={`port-relationship-bar-${port.id}`}
+        className={cn('w-1 shrink-0 rounded-full', relationLabel ? '' : 'bg-border')}
+        style={relationLabel ? { backgroundColor: SELECTED_INPUT_EDGE_COLOR } : undefined}
+      />
+      <div className="min-w-0 flex-1">
+        <div className="flex items-center gap-1.5 text-xs font-medium">
+          <button
+            type="button"
+            className="cursor-pointer rounded p-0.5 text-muted-foreground hover:bg-muted hover:text-foreground"
+            aria-expanded={isOpen}
+            aria-label={`Toggle ${label} port information`}
+            onClick={() => setIsOpen(open => !open)}
+          >
+            <ChevronRight className={cn('h-3 w-3 transition-transform', isOpen && 'rotate-90')} />
+          </button>
+          {port.connectedPipe ? (
+            <button
+              type="button"
+              className="min-w-0 cursor-pointer truncate rounded underline decoration-muted-foreground/50 underline-offset-2 hover:text-primary"
+              aria-label={`Inspect pipe connected to ${label}`}
+              onClick={() => {
+                clearHovered();
+                setRequestedPipeInspection(port.connectedPipe ?? null);
+              }}
+              onFocus={setHovered}
+              onBlur={clearHovered}
+            >
+              <DataText>{label}</DataText>
+            </button>
+          ) : (
+            <DataText className="min-w-0 truncate">{label}</DataText>
+          )}
+          <span className="ml-auto flex shrink-0 items-center gap-1.5">
+            {direction != null && (
+              <DataText className="text-muted-foreground">{String(direction)}</DataText>
+            )}
+            {relationLabel && (
+              <DataText className="rounded bg-primary/15 px-1 text-primary">
+                {relationLabel}
+              </DataText>
+            )}
+          </span>
+        </div>
+        {isOpen && <InformationSections information={port.information} />}
       </div>
-      <InformationSections information={port.information} />
     </div>
   );
 }

@@ -13,6 +13,7 @@ import {
   type StatValue,
 } from '@quent/utils';
 import { DataText } from '../ui/data-text';
+import { InformationGroup } from './InformationGroup';
 
 type PresentedStatistic = InspectedInformationGroup['items'][number];
 
@@ -83,12 +84,9 @@ function InformationSections({
       ? group.items.filter(item => !omittedKeys.has(item.key))
       : group.items;
     return items.length ? (
-      <section key={`${group.heading}-${groupIndex}`} className="mt-2 border-t pt-1">
-        <h4 className="text-[11px] font-semibold uppercase tracking-wide text-muted-foreground">
-          {group.heading}
-        </h4>
+      <InformationGroup key={`${group.heading}-${groupIndex}`} heading={group.heading}>
         <StatisticRows statistics={items} quantitySpecs={quantitySpecs} />
-      </section>
+      </InformationGroup>
     ) : null;
   });
 }

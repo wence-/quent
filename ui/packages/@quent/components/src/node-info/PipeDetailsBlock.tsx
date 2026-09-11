@@ -9,6 +9,7 @@ import {
   type StatValue,
 } from '@quent/utils';
 import { DataText } from '../ui/data-text';
+import { InformationGroup } from './InformationGroup';
 
 function displayValue(value: StatValue): string {
   if (value == null) {
@@ -31,13 +32,11 @@ function EndpointDetails({ label, port }: { label: string; port: InspectedPortDa
         <DataText className="text-xs text-muted-foreground">No statistics</DataText>
       ) : (
         port.information.map((group, groupIndex) => (
-          <div
+          <InformationGroup
             key={`${group.heading}-${groupIndex}`}
-            className="mt-1 border-t pt-1 first:border-t-0"
+            heading={group.heading}
+            className="mt-1 first:border-t-0"
           >
-            <h5 className="text-[11px] font-semibold uppercase tracking-wide text-muted-foreground">
-              {group.heading}
-            </h5>
             {group.items.map((item, itemIndex) => (
               <div
                 key={`${item.key}-${itemIndex}`}
@@ -49,7 +48,7 @@ function EndpointDetails({ label, port }: { label: string; port: InspectedPortDa
                 </DataText>
               </div>
             ))}
-          </div>
+          </InformationGroup>
         ))
       )}
     </section>

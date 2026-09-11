@@ -129,6 +129,16 @@ describe('DAGNodeInfoPanel', () => {
     expect(within(title).getByText('Logical join')).toHaveAttribute('title', 'Logical join');
     expect(screen.getByText('Build hash table')).toBeInTheDocument();
     expect(screen.getByText('Probe hash table')).toBeInTheDocument();
+    fireEvent.click(
+      within(screen.getByTestId('operator-accordion-physical-1')).getByRole('button', {
+        name: 'Toggle Telemetry information',
+      })
+    );
+    fireEvent.click(
+      within(screen.getByTestId('operator-accordion-physical-2')).getByRole('button', {
+        name: 'Toggle Telemetry information',
+      })
+    );
     expect(screen.getByText('build rows:')).toBeInTheDocument();
     expect(screen.getByText('probe rows:')).toBeInTheDocument();
     expect(screen.getByText('physical-1')).toBeInTheDocument();
@@ -181,6 +191,16 @@ describe('DAGNodeInfoPanel', () => {
       name: 'Toggle Build hash table details',
     });
     expect(relatedToggle).toHaveAttribute('aria-expanded', 'true');
+    fireEvent.click(
+      within(screen.getByTestId('operator-accordion-physical-1')).getByRole('button', {
+        name: 'Toggle Telemetry information',
+      })
+    );
+    fireEvent.click(
+      within(screen.getByTestId('operator-accordion-physical-2')).getByRole('button', {
+        name: 'Toggle Telemetry information',
+      })
+    );
     expect(screen.getByText('build rows:')).toBeInTheDocument();
 
     fireEvent.click(relatedToggle);
@@ -206,6 +226,7 @@ describe('DAGNodeInfoPanel', () => {
     expect(screen.getByText('Target · Zip')).toBeInTheDocument();
     expect(screen.getByText('output_0')).toBeInTheDocument();
     expect(screen.getByText('input_1')).toBeInTheDocument();
+    expect(screen.getAllByRole('button', { name: 'Toggle Telemetry information' })).toHaveLength(2);
     expect(screen.getByText('Agrees')).toBeInTheDocument();
     expect(screen.getByText('Differs')).toBeInTheDocument();
     expect(screen.getByText('Missing endpoint')).toBeInTheDocument();

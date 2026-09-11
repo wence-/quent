@@ -262,6 +262,51 @@ describe('getPlanDAG', () => {
     expect(result.nodes).toHaveLength(3); // op2 deduplicated
   });
 
+  it('orders operator ports by producer edge order with inputs before outputs', () => {
+    const left = makeOperator('left', { typeName: 'Scan' });
+    const right = makeOperator('right', { typeName: 'Scan' });
+    const join = makeOperator('join', { typeName: 'Join' });
+    const sink = makeOperator('sink', { typeName: 'Sink' });
+    const leftOutput = makePort('left-output', 'left');
+    const rightOutput = makePort('right-output', 'right');
+    const joinInput0 = makePort('join-input-0', 'join');
+    const joinInput1 = makePort('join-input-1', 'join');
+    const joinOutput = makePort('join-output', 'join');
+    const sinkInput = makePort('sink-input', 'sink');
+    const plan = makePlan('p1', {
+      // Put the output edge first to ensure global edge position does not put
+      // it before the Join's inputs in the detail display.
+      edges: [
+        { source: 'join-output', target: 'sink-input' },
+        { source: 'left-output', target: 'join-input-0' },
+        { source: 'right-output', target: 'join-input-1' },
+      ],
+    });
+    const bundle = makeBundle(
+      { p1: plan },
+      {
+        operators: { left, right, join, sink },
+        // Deliberately disagree with the desired structural order.
+        ports: {
+          'join-output': joinOutput,
+          'join-input-1': joinInput1,
+          'join-input-0': joinInput0,
+          'sink-input': sinkInput,
+          'right-output': rightOutput,
+          'left-output': leftOutput,
+        },
+      }
+    );
+
+    const joinNode = getPlanDAG(bundle, 'p1').nodes.find(node => node.id === 'join');
+    const joinPorts = joinNode?.metadata?.ports as Port[] | undefined;
+    expect(joinPorts?.map(port => port.id)).toEqual([
+      'join-input-0',
+      'join-input-1',
+      'join-output',
+    ]);
+  });
+
   it('builds edges with id "<source-port>-<target-port>"', () => {
     const op1 = makeOperator('op1', { typeName: 'Scan' });
     const op2 = makeOperator('op2', { typeName: 'Join' });

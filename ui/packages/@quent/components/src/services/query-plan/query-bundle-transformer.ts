@@ -24,7 +24,8 @@ export const validateQueryBundle = (
 const getNodeEntity = (
   bundle: QueryBundle<EntityRef>,
   id: string,
-  relatedOperatorIdsById: Map<string, string[]>
+  relatedOperatorIdsById: Map<string, string[]>,
+  orderedPortsByOperator: ReadonlyMap<string, Port[]>
 ): DAGNode | undefined => {
   // Find associated port
   if (bundle?.entities?.ports?.[id]) {
@@ -40,10 +41,7 @@ const getNodeEntity = (
         type: operator.operator_type_name?.toLowerCase() ?? 'operator',
         metadata: {
           rawNode: operator,
-          ports: Object.values(bundle.entities.ports).filter(
-            (candidate): candidate is Port =>
-              candidate !== undefined && candidate.operator_id === operator.id
-          ),
+          ports: orderedPortsByOperator.get(operator.id) ?? [],
           relatedOperatorIds,
           relatedOperators: relatedOperatorIds.flatMap(id => {
             const relatedOperator = bundle.entities.operators[id];
@@ -56,6 +54,38 @@ const getNodeEntity = (
 
   return undefined;
 };
+
+function getOrderedPortsByOperator(
+  bundle: QueryBundle<EntityRef>,
+  plan: Plan
+): Map<string, Port[]> {
+  const result = new Map<string, Port[]>();
+  const seen = new Set<string>();
+  const append = (portId: string) => {
+    const port = bundle.entities.ports[portId];
+    if (!port?.operator_id || seen.has(port.id)) {
+      return;
+    }
+    seen.add(port.id);
+    const ports = result.get(port.operator_id) ?? [];
+    ports.push(port);
+    result.set(port.operator_id, ports);
+  };
+
+  // Plan edge order preserves the producer's structural input/output order.
+  // Collect every target first so operator details read inputs, then outputs.
+  plan.edges.forEach(edge => append(edge.target));
+  plan.edges.forEach(edge => append(edge.source));
+
+  // Retain ports which are not connected in this plan without disturbing the
+  // structural order above. They cannot be ordered from plan topology.
+  Object.values(bundle.entities.ports).forEach(port => {
+    if (port) {
+      append(port.id);
+    }
+  });
+  return result;
+}
 
 /**
  * Recursively transform a plan node into TreeView format and provide display data
@@ -111,6 +141,7 @@ export const getPlanDAG = (
   if (!planTree) {
     throw new Error(`No plan found for planId: ${planId}`);
   }
+  const orderedPortsByOperator = getOrderedPortsByOperator(bundle, planTree);
 
   const selectedOperatorIds = new Set(
     planTree.edges.flatMap(edge =>
@@ -127,8 +158,18 @@ export const getPlanDAG = (
 
   // Build the DAG from the plan's edges
   planTree.edges.forEach(edge => {
-    const sourceNode = getNodeEntity(bundle, edge.source, relatedOperatorIdsById);
-    const targetNode = getNodeEntity(bundle, edge.target, relatedOperatorIdsById);
+    const sourceNode = getNodeEntity(
+      bundle,
+      edge.source,
+      relatedOperatorIdsById,
+      orderedPortsByOperator
+    );
+    const targetNode = getNodeEntity(
+      bundle,
+      edge.target,
+      relatedOperatorIdsById,
+      orderedPortsByOperator
+    );
 
     if (sourceNode && targetNode) {
       const sourcePort = bundle.entities.ports[edge.source];
